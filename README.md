@@ -1,5 +1,5 @@
 # zfs-compression-test
-Standardised ZFS compression test, with repeatable results in mind
+Crude Standardised ZFS compression test, with repeatable results in mind
 
 ## Important notes
 - Make sure you do not have zfs installed already via other means

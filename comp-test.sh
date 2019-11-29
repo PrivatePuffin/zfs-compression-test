@@ -38,6 +38,9 @@ sudo unzip -n enwik9.zip
 
 echo "copying enwik9 to ramdisk"
 sudo cp enwik9 /mnt/ramdisk/
+cd /mnt/ramdisk/
+chksum=`sha256sum enwik9`
+cd -
 
 echo "starting compression test suite"
 for comp in off lz4 zle lzjb gzip zstd
@@ -48,7 +51,13 @@ sudo ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
 sudo echo “results for $comp” >> ./test_results_$now.txt
 sudo dd if=/mnt/ramdisk/enwik9 of=/testpool/fs1/enwik9 bs=1024  2>> ./test_results_$now.txt
 sudo ./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> ./test_results_$now.txt
-sudo rm /testpool/fs1/enwik9
+
+echo "verifying testhash"
+cd /testpool/fs1/
+chkresult=`echo "$chksum" | sha256sum --check`
+sudo rm enwik9
+cd -
+echo "Hashcheck result: $chkresult" >> ./test_results_$now.txt
 done
 
 echo "compression test finished"
