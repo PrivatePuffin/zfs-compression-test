@@ -3,7 +3,7 @@ Standardised ZFS compression test
 
 ## Important notes
 - Make sure you do not have zfs installed already via other means
-- This assumes a clean install with sudo installed
+- This assumes a clean install with sudo, unzip, wget and git installed
 
 ## How setup
 
