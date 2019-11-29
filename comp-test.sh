@@ -3,9 +3,12 @@
 
 now=$(date +%s)
 
+echo "checking if you git cloned zfs"
+[ ! -e ./zfs/.git ] && { echo "You need to clone zfs first! # git clone https://github.com/zfsonlinux/zfs"; exit 1; }
+
 echo "destroy testpool and unmount ramdisk of previous broken/canceled tests"
-sudo ./zfs/cmd/zpool/zpool destroy testpool 2>&1 >/dev/null
-sudo umount -l /mnt/ramdisk 2>&1 >/dev/null 
+test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool 2>&1 >/dev/null
+sudo umount -l /mnt/ramdisk >/dev/null 2>&1
 
 cd ./zfs
 echo "make sure zfs is unloaded and make is cleaned"
