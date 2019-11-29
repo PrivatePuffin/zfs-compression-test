@@ -4,6 +4,7 @@ Standardised ZFS compression test, with repeatable results in mind
 ## Important notes
 - Make sure you do not have zfs installed already via other means
 - This assumes a clean install with sudo, unzip, wget and git installed
+- The enwik9 dataset gets downloaded just once, don;t worry about the time it takes
 
 ## How setup
 
