@@ -6,6 +6,7 @@ Standardised ZFS compression test, with repeatable results in mind
 - This assumes a clean install with sudo, unzip, wget and git installed
 - The enwik9 dataset gets downloaded just once, don;t worry about the time it takes
 - This script makes sure the build/test environment is as prestine as possible before and after running
+- This script uses a ramdisk as source and (pool) destination for writes tests to asure clean and unbottlenecked results
 
 ## How setup
 
