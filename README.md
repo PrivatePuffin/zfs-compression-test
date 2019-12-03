@@ -20,7 +20,7 @@ By now you'll have all dependencies and you'll have a clean git clone in zfs-com
 
 ## How to use
 1. Make sure you cd into the zfs-compression-test directory
-2. run: sudo ./comp-test.sh with on of the **options**
+2. run: sudo ./comp-test.sh with one of the **options**
 
 ## options
 
