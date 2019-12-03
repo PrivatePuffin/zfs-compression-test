@@ -27,6 +27,7 @@ By now you'll have all dependencies and you'll have a clean git clone in zfs-com
 **Compression Tests**
 - **-b** A basic test of only the following algorithms: off lz4 zle lzjb gzip zstd
 - **-f** A full test of all compression algorithms available for ZFS
+- **-c** A Custom test with only the argument algorithm
 
 **Other**
 - **-i** Builds and installs the ZFS testing environment (included for compression tests)

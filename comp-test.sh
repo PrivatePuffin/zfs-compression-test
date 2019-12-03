@@ -16,7 +16,7 @@ then
         exit 0
 fi
 
-while getopts "he" OPTION; do
+while getopts "ribfhc:" OPTION; do
         case $OPTION in
                 r)
                         MODE="RESET"
@@ -36,6 +36,12 @@ while getopts "he" OPTION; do
                         ALGO="off lz4 zle lzjb $GZIP $ZSTD $ZSTDFAST"
                         echo "Selected FULL compression test"
                         echo "This might take a while..."
+                        ;;
+                c)
+                        MODE="CUSTOM"
+                        ALGO="$OPTARG"
+                        echo "Selected custom compression test using the following algorithms:"
+                        echo "$ALGO"
                         ;;
                 h)
                         echo "Usage:"
@@ -90,7 +96,7 @@ then
         sudo ./scripts/zfs.sh
 fi
 
-if [  $MODE = "FULL" -o $MODE = "BASIC" ]
+if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]
 then
         echo "destroy testpool and unmount ramdisk of previous broken/canceled tests"
         test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool 2>&1 >/dev/null
