@@ -1,3 +1,4 @@
+
 # zfs-compression-test
 Crude Standardised ZFS compression test, with repeatable results in mind
 
@@ -19,6 +20,17 @@ By now you'll have all dependencies and you'll have a clean git clone in zfs-com
 
 ## How to use
 1. Make sure you cd into the zfs-compression-test directory
-2. run: sudo ./comp-test.sh
+2. run: sudo ./comp-test.sh with on of the **options**
+
+## options
+
+**Compression Tests**
+- **-b** A basic test of only the following algorithms: off lz4 zle lzjb gzip zstd
+- **-f** A full test of all compression algorithms available for ZFS
+
+**Other**
+- **-i** Builds and installs the ZFS testing environment (included for compression tests)
+- **-r** Completely removes the ZFS testing environment (included for compression tests)
+- **-h** Displays a help page, which includes a reference to the different commands
 
 When finished you'll have a .txt file in the zfs-compression-test directory, containing the test results
