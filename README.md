@@ -35,3 +35,10 @@ By now you'll have all dependencies and you'll have a clean git clone in zfs-com
 - **-h** Displays a help page, which includes a reference to the different commands
 
 When finished you'll have a .txt file in the zfs-compression-test directory, containing the test results
+
+
+###To Do###
+- Add custom ram setting
+- Automatic run of tests and zloop
+- Combinations of Tests, Zloop and Compression
+- Input sanitsaion
