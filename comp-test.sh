@@ -1,12 +1,15 @@
 #!/bin/bash
 #Automated ZFS compressiontest
-BRANCH="master"
+BRANCH="auto_update"
 git fetch
 git update-index -q --refresh
 CHANGED=$(git diff --name-only origin/$BRANCH)
 if [ ! -z "$CHANGED" ];
 then
     echo "script requires update"
+    git checkout origin/$BRANCH
+    echo "script updated"
+    exit 1
 else
     echo "script up-to-date"
 fi
