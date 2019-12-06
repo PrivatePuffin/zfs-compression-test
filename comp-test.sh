@@ -1,5 +1,16 @@
 #!/bin/bash
 #Automated ZFS compressiontest
+BRANCH="master"
+git fetch
+git update-index -q --refresh
+CHANGED=$(git diff --name-only origin/$BRANCH)
+if [ ! -z "$CHANGED" ];
+then
+    echo "script requires update"
+else
+    echo "script up-to-date"
+fi
+
 
 now=$(date +%s)
 
@@ -7,6 +18,7 @@ MODE="NONE"
 GZIP="gzip gzip-1 gzip-2 gzip-3 gzip-4 gzip-5 gzip-6 gzip-7 gzip-8 gzip-9"
 ZSTD="zstd zstd-1 zstd-2 zstd-3 zstd-4 zstd-5 zstd-6 zstd-7 zstd-8 zstd-9 zstd-10 zstd-11 zstd-12 zstd-13 zstd-14 zstd-15 zstd-16 zstd-17 zstd-18 zstd-19"
 ZSTDFAST="zstd-fast zstd-fast-1 zstd-fast-2 zstd-fast-3 zstd-fast-4 zstd-fast-5 zstd-fast-6 zstd-fast-7 zstd-fast-8 zstd-fast-9 zstd-fast-10 zstd-fast-20 zstd-fast-30 zstd-fast-40 zstd-fast-50 zstd-fast-60 zstd-fast-70 zstd-fast-80 zstd-fast-90 zstd-fast-100 zstd-fast-500 zstd-fast-1000"
+
 
 if [ $# -eq 0 ]
 then
