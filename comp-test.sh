@@ -147,7 +147,7 @@ then
                 echo "running compression test for $comp"
                 sudo ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
                 sudo echo “results for $comp” >> ./test_results_$now.txt
-                sudo dd if=/mnt/ramdisk/enwik9 of=/testpool/fs1/enwik9 bs=1024  2>> ./test_results_$now.txt
+                sudo dd if=/mnt/ramdisk/enwik9 of=/testpool/fs1/enwik9 bs=4M  2>> ./test_results_$now.txt
                 sudo ./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> ./test_results_$now.txt
 
                 echo "verifying testhash"
