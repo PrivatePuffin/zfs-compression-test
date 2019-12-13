@@ -157,23 +157,29 @@ then
         cd /mnt/ramdisk/
         chksum=`sha256sum enwik9`
         cd -
+        echo "" >> ./test_results_$now.txt
 
         echo "starting compression test suite"
         for comp in $ALGO
         do
-                echo "" >> ./test_results_$now.txt
                 echo "running compression test for $comp"
-                sudo ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
-                sudo echo “results for $comp” >> ./test_results_$now.txt
-                sudo dd if=/mnt/ramdisk/enwik9 of=/testpool/fs1/enwik9 bs=4M  2>> ./test_results_$now.txt
-                sudo ./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> ./test_results_$now.txt
-
+                ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
+                echo “Compression results for $comp” >> ./test_results_$now.txt
+                dd if=/mnt/ramdisk/enwik9 of=/testpool/fs1/enwik9 bs=4M  2>> ./test_results_$now.txt
+                ./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> ./test_results_$now.txt
+                echo "" >> ./test_results_$now.txt
+                echo “Decompression results for $comp” >> ./test_results_$now.txt
+                dd if=/testpool/fs1/enwik9 of=/dev/null bs=4M  2>> ./test_results_$now.txt
+                echo ""  >> ./test_results_$now.txt
                 echo "verifying testhash"
                 cd /testpool/fs1/
                 chkresult=`echo "$chksum" | sha256sum --check`
                 sudo rm enwik9
                 cd -
                 echo "hashcheck result: $chkresult" >> ./test_results_$now.txt
+                echo "" >> ./test_results_$now.txt
+                echo "----" >> ./test_results_$now.txt
+                echo "" >> ./test_results_$now.txt
         done
 
         echo "compression test finished"
