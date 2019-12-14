@@ -24,8 +24,8 @@ MODE="NONE"
 GZIP="gzip gzip-1 gzip-2 gzip-3 gzip-4 gzip-5 gzip-6 gzip-7 gzip-8 gzip-9"
 ZSTD="zstd zstd-1 zstd-2 zstd-3 zstd-4 zstd-5 zstd-6 zstd-7 zstd-8 zstd-9 zstd-10 zstd-11 zstd-12 zstd-13 zstd-14 zstd-15 zstd-16 zstd-17 zstd-18 zstd-19"
 ZSTDFAST="zstd-fast zstd-fast-1 zstd-fast-2 zstd-fast-3 zstd-fast-4 zstd-fast-5 zstd-fast-6 zstd-fast-7 zstd-fast-8 zstd-fast-9 zstd-fast-10 zstd-fast-20 zstd-fast-30 zstd-fast-40 zstd-fast-50 zstd-fast-60 zstd-fast-70 zstd-fast-80 zstd-fast-90 zstd-fast-100 zstd-fast-500 zstd-fast-1000"
-
-
+TYPE="WIKIPEDIA"
+TESTRESULTS="test_results_$now.txt"
 if [ $# -eq 0 ]
 then
         echo "Missing options!"
@@ -34,8 +34,30 @@ then
         exit 0
 fi
 
-while getopts "ribfhc:" OPTION; do
+while getopts "p:t:ribfhc:" OPTION; do
         case $OPTION in
+		p)	
+			TESTRESULTS="$OPTARG-$TESTRESULTS"
+			echo "Results file of the test is called: ./$TESTRESULTS"
+			
+			;;
+		t)	
+			TYPE="$OPTARG"
+			case $TYPE in
+				[wW])	
+					echo "Selected highly compressible Wikipedia file"
+					TYPE="WIKIPEDIA"
+					;;
+				[mM])
+					echo "Selected nearly uncompressible MPEG4 file"
+					TYPE="MPEG4"
+					;;
+				*)	
+					echo "Unknown Selection of Testtype. Using default"
+				       	TYPE="WIKIPEDIA"
+					;;	
+			esac
+			;;
                 r)
                         MODE="RESET"
                         echo "Selected RESET of ZSTD test-installation"
@@ -74,9 +96,17 @@ while getopts "ribfhc:" OPTION; do
                         echo ""
                         echo "   -b    to execute a basic compression test containing: off lz4 zle lzjb gzip zstd"
                         echo "   -f    to execute a full compression test containing all currently available ZFS compression algorithms"
+			echo "   -c    to execute the entered list of following compression types: "
+			echo "         off lz4 zle lzjb $GZIP"
+			echo "         $ZSTD"
+		       	echo "         $ZSTDFAST"
                         echo ""
                         echo "   -i to install a ZFS test environment"
                         echo "   -r to reset a ZFS test environment"
+			echo "   -p to enter a prefix to the test_result files"
+			echo "   -t to select the type of test:"
+			echo "      w for highly compressible wikipedia file"
+			echo "      m for nearly uncompressible mpeg4 file"
                         echo "   -h     help (this output)"
                         echo "ALL these values are mutually exclusive"
                         exit 0
@@ -148,42 +178,64 @@ then
         sudo ./zfs/cmd/zpool/zpool create testpool -f -o ashift=12  /mnt/ramdisk/pooldisk.img
         sudo ./zfs/cmd/zfs/zfs create testpool/fs1
 
-        echo "downloading and extracting enwik9 testset"
-        sudo wget -nc http://mattmahoney.net/dc/enwik9.zip
-        sudo unzip -n enwik9.zip
+	# Downloading and may be uncompressing file 
+	FILENAME=""
+	case "$TYPE" in 
 
-        echo "copying enwik9 to ramdisk"
-        sudo cp enwik9 /mnt/ramdisk/
+		WIKIPEDIA)	
+        		echo "downloading and extracting enwik9 testset"
+        		sudo wget -nc http://mattmahoney.net/dc/enwik9.zip
+        		sudo unzip -n enwik9.zip
+			FILENAME="enwik9"
+			;;
+		MPEG4)
+			echo "downloading a MPEG4 testfile"
+			sudo wget -nc http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_native_60fps_stereo_abl.mp4
+			FILENAME="bbb_sunflower_native_60fps_stereo_abl.mp4"
+			;;
+
+		*)	
+			echo "ERROR: $TYPE is not unknown"
+			exit 1
+			;;
+	esac
+
+        echo "copying $FILENAME to ramdisk, truncating it after 1000M"
+	sudo dd if=$FILENAME of=/mnt/ramdisk/$FILENAME bs=1M count=1000 status=none
         cd /mnt/ramdisk/
-        chksum=`sha256sum enwik9`
+        chksum=`sha256sum $FILENAME`
         cd -
-        echo "" >> ./test_results_$now.txt
+        echo "" >> "./$TESTRESULTS"
+        echo "Test with $FILENAME file" >> "./$TESTRESULTS"
+	grep "^model name" /proc/cpuinfo |sort -u >> "./$TESTRESULTS"
+	grep "^flags" /proc/cpuinfo |sort -u >>  "./$TESTRESULTS"
+	echo "" >> "./$TESTRESULTS"
 
         echo "starting compression test suite"
         for comp in $ALGO
         do
                 echo "running compression test for $comp"
                 ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
-                echo “Compression results for $comp” >> ./test_results_$now.txt
-                dd if=/mnt/ramdisk/enwik9 of=/testpool/fs1/enwik9 bs=4M  2>> ./test_results_$now.txt
-                ./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> ./test_results_$now.txt
-                echo "" >> ./test_results_$now.txt
-                echo “Decompression results for $comp” >> ./test_results_$now.txt
-                dd if=/testpool/fs1/enwik9 of=/dev/null bs=4M  2>> ./test_results_$now.txt
-                echo ""  >> ./test_results_$now.txt
+                echo “Compression results for $comp” >> "./$TESTRESULTS"
+                dd if=/mnt/ramdisk/$FILENAME of=/testpool/fs1/$FILENAME bs=4M  2>> "./$TESTRESULTS"
+                ./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> "./$TESTRESULTS"
+                echo "" >> "./$TESTRESULTS"
+                echo “Decompression results for $comp” >> "./$TESTRESULTS"
+                dd if=/testpool/fs1/$FILENAME of=/dev/null bs=4M  2>> "./$TESTRESULTS"
+                echo ""  >> "./$TESTRESULTS"
                 echo "verifying testhash"
                 cd /testpool/fs1/
                 chkresult=`echo "$chksum" | sha256sum --check`
-                sudo rm enwik9
+                sudo rm $FILENAME
                 cd -
-                echo "hashcheck result: $chkresult" >> ./test_results_$now.txt
-                echo "" >> ./test_results_$now.txt
-                echo "----" >> ./test_results_$now.txt
-                echo "" >> ./test_results_$now.txt
+                echo "hashcheck result: $chkresult" >> "./$TESTRESULTS"
+                echo "" >> "./$TESTRESULTS"
+                echo "----" >> "./$TESTRESULTS"
+                echo "" >> "./$TESTRESULTS"
         done
 
         echo "compression test finished"
-        echo "destroying pool and unmounting randisk"
+        echo "destroying pool and unmounting ramdisk"
         sudo ./zfs/cmd/zpool/zpool destroy testpool
         sudo umount -l /mnt/ramdisk
         echo "unloading and unlinking zfs"
