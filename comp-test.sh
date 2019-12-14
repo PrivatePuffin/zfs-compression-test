@@ -158,6 +158,10 @@ then
         chksum=`sha256sum enwik9`
         cd -
         echo "" >> ./test_results_$now.txt
+        echo "Test with enwik9 file" >> ./test_results_$now.txt
+	grep "^model name" /proc/cpuinfo |sort -u >> ./test_results_$now.txt
+	grep "^flags" /proc/cpuinfo |sort -u >>  ./test_results_$now.txt
+	echo "" >> ./test_results_$now.txt
 
         echo "starting compression test suite"
         for comp in $ALGO
