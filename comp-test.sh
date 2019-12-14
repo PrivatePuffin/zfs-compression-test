@@ -178,17 +178,35 @@ then
         sudo ./zfs/cmd/zpool/zpool create testpool -f -o ashift=12  /mnt/ramdisk/pooldisk.img
         sudo ./zfs/cmd/zfs/zfs create testpool/fs1
 
-        echo "downloading and extracting enwik9 testset"
-        sudo wget -nc http://mattmahoney.net/dc/enwik9.zip
-        sudo unzip -n enwik9.zip
+	# Downloading and may be uncompressing file 
+	FILENAME=""
+	case "$TYPE" in 
 
-        echo "copying enwik9 to ramdisk"
-        sudo cp enwik9 /mnt/ramdisk/
+		WIKIPEDIA)	
+        		echo "downloading and extracting enwik9 testset"
+        		sudo wget -nc http://mattmahoney.net/dc/enwik9.zip
+        		sudo unzip -n enwik9.zip
+			FILENAME="enwik9"
+			;;
+		MPEG4)
+			echo "downloading a MPEG4 testfile"
+			sudo wget -nc http://distribution.bbb3d.renderfarming.net/video/mp4/bbb_sunflower_native_60fps_stereo_abl.mp4
+			FILENAME="bbb_sunflower_native_60fps_stereo_abl.mp4"
+			;;
+
+		*)	
+			echo "ERROR: $TYPE is not unknown"
+			exit 1
+			;;
+	esac
+
+        echo "copying $FILENAME to ramdisk, truncating it after 1000M"
+	sudo dd if=$FILENAME of=/mnt/ramdisk/$FILENAME bs=1M count=1000
         cd /mnt/ramdisk/
-        chksum=`sha256sum enwik9`
+        chksum=`sha256sum $FILENAME`
         cd -
         echo "" >> "./$TESTRESULTS"
-        echo "Test with enwik9 file" >> "./$TESTRESULTS"
+        echo "Test with $FILENAME file" >> "./$TESTRESULTS"
 	grep "^model name" /proc/cpuinfo |sort -u >> "./$TESTRESULTS"
 	grep "^flags" /proc/cpuinfo |sort -u >>  "./$TESTRESULTS"
 	echo "" >> "./$TESTRESULTS"
@@ -199,16 +217,16 @@ then
                 echo "running compression test for $comp"
                 ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
                 echo “Compression results for $comp” >> "./$TESTRESULTS"
-                dd if=/mnt/ramdisk/enwik9 of=/testpool/fs1/enwik9 bs=4M  2>> "./$TESTRESULTS"
+                dd if=/mnt/ramdisk/$FILENAME of=/testpool/fs1/$FILENAME bs=4M  2>> "./$TESTRESULTS"
                 ./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> "./$TESTRESULTS"
                 echo "" >> "./$TESTRESULTS"
                 echo “Decompression results for $comp” >> "./$TESTRESULTS"
-                dd if=/testpool/fs1/enwik9 of=/dev/null bs=4M  2>> "./$TESTRESULTS"
+                dd if=/testpool/fs1/$FILENAME of=/dev/null bs=4M  2>> "./$TESTRESULTS"
                 echo ""  >> "./$TESTRESULTS"
                 echo "verifying testhash"
                 cd /testpool/fs1/
                 chkresult=`echo "$chksum" | sha256sum --check`
-                sudo rm enwik9
+                sudo rm $FILENAME
                 cd -
                 echo "hashcheck result: $chkresult" >> "./$TESTRESULTS"
                 echo "" >> "./$TESTRESULTS"
