@@ -1,21 +1,21 @@
 #!/bin/bash
 #Automated ZFS compressiontest
 
-#BRANCH="master"
-#git fetch
-#git update-index -q --refresh
-#CHANGED=$(git diff --name-only origin/$BRANCH)
-#if [ ! -z "$CHANGED" ];
-#then
-#    echo "script requires update"
-#    git reset --hard
-#    git checkout $BRANCH
-#    git pull
-#    echo "script updated"
-#    exit 1
-#else
-#    echo "script up-to-date"
-#fi
+BRANCH="master"
+git fetch
+git update-index -q --refresh
+CHANGED=$(git diff --name-only origin/$BRANCH)
+if [ ! -z "$CHANGED" ];
+then
+    echo "script requires update"
+    git reset --hard
+    git checkout $BRANCH
+    git pull
+    echo "script updated"
+    exit 1
+else
+    echo "script up-to-date"
+fi
 
 
 now=$(date +%s)
@@ -201,7 +201,7 @@ then
 	esac
 
         echo "copying $FILENAME to ramdisk, truncating it after 1000M"
-	sudo dd if=$FILENAME of=/mnt/ramdisk/$FILENAME bs=1M count=1000
+	sudo dd if=$FILENAME of=/mnt/ramdisk/$FILENAME bs=1M count=1000 status=none
         cd /mnt/ramdisk/
         chksum=`sha256sum $FILENAME`
         cd -
@@ -235,7 +235,7 @@ then
         done
 
         echo "compression test finished"
-        echo "destroying pool and unmounting randisk"
+        echo "destroying pool and unmounting ramdisk"
         sudo ./zfs/cmd/zpool/zpool destroy testpool
         sudo umount -l /mnt/ramdisk
         echo "unloading and unlinking zfs"
