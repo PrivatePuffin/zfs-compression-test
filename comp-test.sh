@@ -177,6 +177,7 @@ then
         echo "creating zfs testpool/fs1"
         sudo ./zfs/cmd/zpool/zpool create testpool -f -o ashift=12  /mnt/ramdisk/pooldisk.img
         sudo ./zfs/cmd/zfs/zfs create testpool/fs1
+		sudo ./zfs/cmd/zfs/zfs set recordsize=1M  testpool/fs1
 
 	# Downloading and may be uncompressing file 
 	FILENAME=""
