@@ -64,7 +64,7 @@ while getopts "p:t:ribfhc:" OPTION; do
                         ;;
                 i)
                         MODE="INSTALL"
-                        echo "Selected ISNTALL of ZSTD test-installation"
+                        echo "Selected INSTALL of ZSTD test-installation"
                         ;;
                 b)
                         MODE="BASIC"
@@ -246,5 +246,5 @@ then
         make distclean >> /dev/null
         cd ..
 
-        echo "Done. results writen to test_results_$now.txt "
+        echo "Done. results writen to ./$TESTRESULT"
 fi
