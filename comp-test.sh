@@ -222,11 +222,11 @@ then
 			echo "Could not set compression to $comp! Skipping test."
 		else
                 	echo “Compression results for $comp” >> "./$TESTRESULTS"
-                	dd if=/mnt/ramdisk/$FILENAME of=/testpool/fs1/$FILENAME bs=4M  2>> "./$TESTRESULTS"
+                	dd if=/mnt/ramdisk/$FILENAME of=/testpool/fs1/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
                 	./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> "./$TESTRESULTS"
                 	echo "" >> "./$TESTRESULTS"
                 	echo “Decompression results for $comp” >> "./$TESTRESULTS"
-                	dd if=/testpool/fs1/$FILENAME of=/dev/null bs=4M  2>> "./$TESTRESULTS"
+                	dd if=/testpool/fs1/$FILENAME of=/dev/null bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
                 	echo ""  >> "./$TESTRESULTS"
                 	echo "verifying testhash"
                 	cd /testpool/fs1/
@@ -251,5 +251,5 @@ then
         make distclean >> /dev/null
         cd ..
 
-        echo "Done. results written to ./$TESTRESULT"
+        echo "Done. results written to ./$TESTRESULTS"
 fi
