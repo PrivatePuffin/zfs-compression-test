@@ -246,5 +246,5 @@ then
         make distclean >> /dev/null
         cd ..
 
-        echo "Done. results written to ./$TESTRESULT"
+        echo "Done. results written to ./$TESTRESULTS"
 fi
