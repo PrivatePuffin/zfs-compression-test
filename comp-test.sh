@@ -171,7 +171,7 @@ then
         sudo mkdir /mnt/ramdisk
         sudo mount -t tmpfs -o size=2400m tmpfs /mnt/ramdisk
 
-        echo "creating virtial pool drive"
+        echo "creating virtual pool drive"
         truncate -s 1200m /mnt/ramdisk/pooldisk.img
 
         echo "creating zfs testpool/fs1"
@@ -246,5 +246,5 @@ then
         make distclean >> /dev/null
         cd ..
 
-        echo "Done. results writen to ./$TESTRESULT"
+        echo "Done. results written to ./$TESTRESULT"
 fi
