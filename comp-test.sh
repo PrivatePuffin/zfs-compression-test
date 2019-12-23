@@ -64,7 +64,7 @@ while getopts "p:t:ribfhc:" OPTION; do
                         ;;
                 i)
                         MODE="INSTALL"
-                        echo "Selected ISNTALL of ZSTD test-installation"
+                        echo "Selected INSTALL of ZSTD test-installation"
                         ;;
                 b)
                         MODE="BASIC"
@@ -171,7 +171,7 @@ then
         sudo mkdir /mnt/ramdisk
         sudo mount -t tmpfs -o size=2400m tmpfs /mnt/ramdisk
 
-        echo "creating virtial pool drive"
+        echo "creating virtual pool drive"
         truncate -s 1200m /mnt/ramdisk/pooldisk.img
 
         echo "creating zfs testpool/fs1"
@@ -217,22 +217,27 @@ then
         do
                 echo "running compression test for $comp"
                 ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
-                echo “Compression results for $comp” >> "./$TESTRESULTS"
-                dd if=/mnt/ramdisk/$FILENAME of=/testpool/fs1/$FILENAME bs=4M  2>> "./$TESTRESULTS"
-                ./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> "./$TESTRESULTS"
-                echo "" >> "./$TESTRESULTS"
-                echo “Decompression results for $comp” >> "./$TESTRESULTS"
-                dd if=/testpool/fs1/$FILENAME of=/dev/null bs=4M  2>> "./$TESTRESULTS"
-                echo ""  >> "./$TESTRESULTS"
-                echo "verifying testhash"
-                cd /testpool/fs1/
-                chkresult=`echo "$chksum" | sha256sum --check`
-                sudo rm $FILENAME
-                cd -
-                echo "hashcheck result: $chkresult" >> "./$TESTRESULTS"
-                echo "" >> "./$TESTRESULTS"
-                echo "----" >> "./$TESTRESULTS"
-                echo "" >> "./$TESTRESULTS"
+		if [ $? -ne 0 ];
+		then
+			echo "Could not set compression to $comp! Skipping test."
+		else
+                	echo “Compression results for $comp” >> "./$TESTRESULTS"
+                	dd if=/mnt/ramdisk/$FILENAME of=/testpool/fs1/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
+                	./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> "./$TESTRESULTS"
+                	echo "" >> "./$TESTRESULTS"
+                	echo “Decompression results for $comp” >> "./$TESTRESULTS"
+                	dd if=/testpool/fs1/$FILENAME of=/dev/null bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
+                	echo ""  >> "./$TESTRESULTS"
+                	echo "verifying testhash"
+                	cd /testpool/fs1/
+                	chkresult=`echo "$chksum" | sha256sum --check`
+                	sudo rm $FILENAME
+                	cd -
+                	echo "hashcheck result: $chkresult" >> "./$TESTRESULTS"
+                	echo "" >> "./$TESTRESULTS"
+                	echo "----" >> "./$TESTRESULTS"
+                	echo "" >> "./$TESTRESULTS"
+		fi
         done
 
         echo "compression test finished"
@@ -246,5 +251,5 @@ then
         make distclean >> /dev/null
         cd ..
 
-        echo "Done. results writen to test_results_$now.txt "
+        echo "Done. results written to ./$TESTRESULTS"
 fi
