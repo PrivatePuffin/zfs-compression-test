@@ -12,15 +12,15 @@ Crude Standardised ZFS compression test, with repeatable results in mind
 ## How setup
 
 1. Install all dependancies as described here: https://github.com/zfsonlinux/zfs/wiki/Building-ZFS#installing-dependencies
-2. Run: git clone https://github.com/Ornias1993/zfs-compression-test
-3. Run: cd zfs-compression-test
-3. Clone the branch/repo containing ZoL (ex. git clone https://github.com/zfsonlinux/zfs 
+2. Run: `git clone https://github.com/Ornias1993/zfs-compression-test`
+3. Run: `cd zfs-compression-test`
+3. Clone the branch/repo containing ZoL (ex. `git clone https://github.com/zfsonlinux/zfs` )
 
 By now you'll have all dependencies and you'll have a clean git clone in zfs-compression-test/zfs
 
 ## How to use
 1. Make sure you cd into the zfs-compression-test directory
-2. run: sudo ./comp-test.sh with one of the **options**
+2. run: sudo ./comp-test.sh with one of the **options** (ex. sudo `./comp-test.sh -i -b -r` )
 
 ## options
 
@@ -32,8 +32,8 @@ By now you'll have all dependencies and you'll have a clean git clone in zfs-com
 - **-p** Enter a different prefix for the test results
 
 **Other**
-- **-i** Builds and installs the ZFS testing environment (included for compression tests)
-- **-r** Completely removes the ZFS testing environment (included for compression tests)
+- **-i** Builds and installs the ZFS testing environment (before running tests)
+- **-r** Completely removes the ZFS testing environment (after running tests)
 - **-h** Displays a help page, which includes a reference to the different commands
 
 When finished you'll have a .txt file in the zfs-compression-test directory, containing the test results
