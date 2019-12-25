@@ -12,9 +12,10 @@ Crude Standardised ZFS compression test, with repeatable results in mind
 ## How setup
 
 1. Install all dependancies as described here: https://github.com/zfsonlinux/zfs/wiki/Building-ZFS#installing-dependencies
-2. Run: `git clone https://github.com/Ornias1993/zfs-compression-test`
-3. Run: `cd zfs-compression-test`
-3. Clone the branch/repo containing ZoL (ex. `git clone https://github.com/zfsonlinux/zfs` )
+2. make sure fio is installed (ex. `apt-get install fio` )
+3. Run: `git clone https://github.com/Ornias1993/zfs-compression-test`
+4. Run: `cd zfs-compression-test`
+5. Clone the branch/repo containing ZoL (ex. `git clone https://github.com/zfsonlinux/zfs` )
 
 By now you'll have all dependencies and you'll have a clean git clone in zfs-compression-test/zfs
 

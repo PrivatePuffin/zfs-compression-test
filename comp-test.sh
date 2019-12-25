@@ -149,12 +149,11 @@ then
         sudo rm -f /dev/shm/pooldisk.img
 
         echo "creating virtual pool drive"
-        truncate -s 1200m /dev/shm/pooldisk.img
+        truncate -s 2000m /dev/shm/pooldisk.img
 
         echo "creating zfs testpool/fs1"
         sudo ./zfs/cmd/zpool/zpool create testpool -f -o ashift=12  /dev/shm/pooldisk.img
-        sudo ./zfs/cmd/zfs/zfs create testpool/fs1
-		sudo ./zfs/cmd/zfs/zfs set recordsize=1M  testpool/fs1
+
 
 	# Downloading and may be uncompressing file 
 	FILENAME=""
@@ -177,12 +176,7 @@ then
 			exit 1
 			;;
 	esac
-
-        echo "copying $FILENAME to ram, truncating it after 1000M"
-	    sudo dd if=$FILENAME of=/dev/shm/$FILENAME bs=1M count=1000 status=none
-        cd /dev/shm/
         chksum=`sha256sum $FILENAME`
-        cd -
         echo "" >> "./$TESTRESULTS"
         echo "Test with $FILENAME file" >> "./$TESTRESULTS"
 	    grep "^model name" /proc/cpuinfo |sort -u >> "./$TESTRESULTS"
@@ -192,28 +186,40 @@ then
         echo "starting compression test suite"
         for comp in $ALGO
         do
+				sudo ./zfs/cmd/zfs/zfs create testpool/fs1
+				sudo ./zfs/cmd/zfs/zfs set recordsize=1M  testpool/fs1
                 echo "running compression test for $comp"
                 ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
 		if [ $? -ne 0 ];
 		then
 			echo "Could not set compression to $comp! Skipping test."
 		else
+					
                 	echo “Compression results for $comp” >> "./$TESTRESULTS"
-                	dd if=/dev/shm/$FILENAME of=/testpool/fs1/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
-                	./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> "./$TESTRESULTS"
-                	echo "" >> "./$TESTRESULTS"
-                	echo “Decompression results for $comp” >> "./$TESTRESULTS"
-                	dd if=/testpool/fs1/$FILENAME of=/dev/null bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
-                	echo ""  >> "./$TESTRESULTS"
-                	echo "verifying testhash"
-                	cd /testpool/fs1/
+					dd if=./$FILENAME of=/testpool/fs1/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
+					./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> "./$TESTRESULTS"
+					echo ""  >> "./$TESTRESULTS"
+                 	echo "verifying testhash"
+                 	cd /testpool/fs1/
                 	chkresult=`echo "$chksum" | sha256sum --check`
-                	sudo rm $FILENAME
-                	cd -
-                	echo "hashcheck result: $chkresult" >> "./$TESTRESULTS"
+                 	cd -
+                 	echo "hashcheck result: $chkresult" >> "./$TESTRESULTS"
+                 	echo "" >> "./$TESTRESULTS"
+					rm /testpool/fs1/$FILENAME
+					echo "" >> "./$TESTRESULTS"
+					echo "Speed:" >> "./$TESTRESULTS"
+                	fio ./tests/sequential_writes.fio 2>&1 |grep "MIXED: bw=" >> "./$TESTRESULTS"
                 	echo "" >> "./$TESTRESULTS"
+					
+					
+					echo "" >> "./$TESTRESULTS"
+					echo “Decompression results for $comp” >> "./$TESTRESULTS"
+					echo "Speed:" >> "./$TESTRESULTS"
+					fio ./tests/sequential_reads.fio 2>&1 |grep "MIXED: bw=" >> "./$TESTRESULTS"
+                	echo ""  >> "./$TESTRESULTS"
                 	echo "----" >> "./$TESTRESULTS"
                 	echo "" >> "./$TESTRESULTS"
+					sudo ./zfs/cmd/zfs/zfs destroy testpool/fs1
 		fi
         done
 
