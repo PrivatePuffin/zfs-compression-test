@@ -1,0 +1,16 @@
+[workload]
+bs=128k
+ioengine=libaio
+iodepth=1
+numjobs=16
+direct=1
+runtime=10
+size=100m
+directory=/testpool/fs1/
+rw=readwrite
+thread
+unified_rw_reporting=1
+group_reporting=1
+buffer_compress_percentage=66
+refill_buffers
+buffer_pattern=0xdeadbeef

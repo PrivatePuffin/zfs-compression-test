@@ -21,6 +21,8 @@ fi
 now=$(date +%s)
 
 MODE="NONE"
+IO="sequential random"
+RW="Write Read ReadWrite"
 INSTALL="FALSE"
 RESET="FALSE"
 GZIP="gzip gzip-1 gzip-2 gzip-3 gzip-4 gzip-5 gzip-6 gzip-7 gzip-8 gzip-9"
@@ -70,6 +72,7 @@ while getopts "p:t:ribfhc:" OPTION; do
                         ;;
                 b)
                         MODE="BASIC"
+						IO="sequential"
                         ALGO="off lz4 zle lzjb gzip zstd"
                         echo "Selected BASIC compression test"
                         ;;
@@ -144,8 +147,8 @@ fi
 
 if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]
 then
-        echo "destroy testpool and cleam ram of previous broken/canceled tests"
-        test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool 2>&1 >/dev/null
+        echo "destroy testpool and clean ram of previous broken/canceled tests"
+        test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool >> /dev/null
         sudo rm -f /dev/shm/pooldisk.img
 
         echo "creating virtual pool drive"
@@ -182,45 +185,57 @@ then
 	    grep "^model name" /proc/cpuinfo |sort -u >> "./$TESTRESULTS"
 	    grep "^flags" /proc/cpuinfo |sort -u >>  "./$TESTRESULTS"
 	    echo "" >> "./$TESTRESULTS"
-
         echo "starting compression test suite"
-        for comp in $ALGO
-        do
-				sudo ./zfs/cmd/zfs/zfs create testpool/fs1
+		echo "" >> "./$TESTRESULTS"
+
+		for io in $IO
+		do
+			echo "Starting $io compression-performance tests"
+			sudo ./zfs/cmd/zfs/zfs create testpool/fs1
+			if [ $io = "random" ]
+			then
+				sudo ./zfs/cmd/zfs/zfs set recordsize=8K  testpool/fs1
+			else
 				sudo ./zfs/cmd/zfs/zfs set recordsize=1M  testpool/fs1
-                echo "running compression test for $comp"
-                ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
-		if [ $? -ne 0 ];
-		then
-			echo "Could not set compression to $comp! Skipping test."
-		else
-					
-                	echo “Compression results for $comp” >> "./$TESTRESULTS"
+			fi
+			for comp in $ALGO
+			do
+				echo "running benchmarks for $comp"
+				sudo ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
+				if [ $? -ne 0 ];
+				then
+					echo "Could not set compression to $comp! Skipping test."
+				else
+					echo “$io Benchmark Results for $comp” >> "./$TESTRESULTS"
 					dd if=./$FILENAME of=/testpool/fs1/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
+					echo "Compression Ratio:" >> "./$TESTRESULTS"
 					./zfs/cmd/zfs/zfs get compressratio testpool/fs1 >> "./$TESTRESULTS"
 					echo ""  >> "./$TESTRESULTS"
-                 	echo "verifying testhash"
-                 	cd /testpool/fs1/
-                	chkresult=`echo "$chksum" | sha256sum --check`
-                 	cd -
-                 	echo "hashcheck result: $chkresult" >> "./$TESTRESULTS"
-                 	echo "" >> "./$TESTRESULTS"
+					echo "verifying testhash"
+					cd /testpool/fs1/
+					chkresult=`echo "$chksum" | sha256sum --check`
+					cd - >> /dev/null
+					echo "hashcheck result: $chkresult" >> "./$TESTRESULTS"
+					echo "" >> "./$TESTRESULTS"
 					rm /testpool/fs1/$FILENAME
 					echo "" >> "./$TESTRESULTS"
-					echo "Speed:" >> "./$TESTRESULTS"
-                	fio ./tests/sequential_writes.fio 2>&1 |grep "MIXED: bw=" >> "./$TESTRESULTS"
-                	echo "" >> "./$TESTRESULTS"
-					
-					
+					for rw in $RW
+					do
+						echo "$rw (de)compression results for $comp" >> "./$TESTRESULTS"
+						echo "Speed:" >> "./$TESTRESULTS"
+						fio ./tests/$io-$rw.fio 2>&1 |grep "MIXED: bw=" >> "./$TESTRESULTS"
+						echo "" >> "./$TESTRESULTS"
+						rm -f /testpool/fs1/*
+					done
+					echo ""  >> "./$TESTRESULTS"
+					echo "----" >> "./$TESTRESULTS"
 					echo "" >> "./$TESTRESULTS"
-					echo “Decompression results for $comp” >> "./$TESTRESULTS"
-					echo "Speed:" >> "./$TESTRESULTS"
-					fio ./tests/sequential_reads.fio 2>&1 |grep "MIXED: bw=" >> "./$TESTRESULTS"
-                	echo ""  >> "./$TESTRESULTS"
-                	echo "----" >> "./$TESTRESULTS"
-                	echo "" >> "./$TESTRESULTS"
-					sudo ./zfs/cmd/zfs/zfs destroy testpool/fs1
-		fi
+				fi
+			done
+			echo ""  >> "./$TESTRESULTS"
+			echo ""  >> "./$TESTRESULTS"
+			echo ""  >> "./$TESTRESULTS"
+			sudo ./zfs/cmd/zfs/zfs destroy testpool/fs1
         done
 
         echo "compression test finished"
