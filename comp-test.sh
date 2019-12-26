@@ -73,7 +73,7 @@ while getopts "p:t:ribfhc:s:" OPTION; do
                         ;;
                 b)
                         MODE="BASIC"
-						IO="sequential"
+			IO="sequential"
                         ALGO="off lz4 zle lzjb gzip zstd"
                         echo "Selected BASIC compression test"
                         ;;
@@ -97,7 +97,7 @@ while getopts "p:t:ribfhc:s:" OPTION; do
 			echo 
 			if [[ $REPLY =~ ^[Yy]$ ]]
 			then
-				echo	# do dangerous stuff
+				echo "OK. Continuing..."
 			else 
 				echo "exiting..."
 				exit 1
@@ -114,12 +114,12 @@ while getopts "p:t:ribfhc:s:" OPTION; do
                         echo "$0 -i  "
                         echo "$0 -r "
                         echo ""
-                        echo "   -b    to execute a basic compression test containing: off lz4 zle lzjb gzip zstd"
-                        echo "   -f    to execute a full compression test containing all currently available ZFS compression algorithms"
-			echo "   -c    to execute the entered list of following compression types: "
-			echo "         off lz4 zle lzjb $GZIP"
-			echo "         $ZSTD"
-		       	echo "         $ZSTDFAST"
+                        echo "   -b to execute a basic compression test containing: off lz4 zle lzjb gzip zstd"
+                        echo "   -f to execute a full compression test containing all currently available ZFS compression algorithms"
+			echo "   -c to execute the entered list of following compression types: "
+			echo "      off lz4 zle lzjb $GZIP"
+			echo "      $ZSTD"
+		       	echo "      $ZSTDFAST"
                         echo ""
                         echo "   -i to install a ZFS test environment"
                         echo "   -r to reset a ZFS test environment"
@@ -127,7 +127,9 @@ while getopts "p:t:ribfhc:s:" OPTION; do
 			echo "   -t to select the type of test:"
 			echo "      w for highly compressible wikipedia file"
 			echo "      m for nearly uncompressible mpeg4 file"
-                        echo "   -h     help (this output)"
+			echo "   -s to use custom devices and raid setups. (DANGEROUS!)"
+			echo "      example for custom storagepools: $0 -s \"raidz1 /dev/sga /dev/sgb /dev/sgc\" "
+                        echo "   -h help (this output)"
                         echo "ALL these values are mutually exclusive"
                         exit 0
                         ;;
