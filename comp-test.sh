@@ -1,22 +1,22 @@
 #!/bin/bash
 #Automated ZFS compressiontest
 
-BRANCH="master"
-git fetch
-git update-index -q --refresh
-CHANGED=$(git diff --name-only origin/$BRANCH)
-if [ ! -z "$CHANGED" ];
-then
-    echo "script requires update"
-    git reset --hard
-    git checkout $BRANCH
-    git pull
-    echo "script updated"
-    exit 1
-else
-    echo "script up-to-date"
-fi
-
+#BRANCH="master"
+#git fetch
+#git update-index -q --refresh
+#CHANGED=$(git diff --name-only origin/$BRANCH)
+#if [ ! -z "$CHANGED" ];
+#then
+    #echo "script requires update"
+    #git reset --hard
+    #git checkout $BRANCH
+    #git pull
+    #echo "script updated"
+    #exit 1
+#else
+    #echo "script up-to-date"
+#fi
+#
 
 now=$(date +%s)
 
@@ -29,6 +29,7 @@ GZIP="gzip gzip-1 gzip-2 gzip-3 gzip-4 gzip-5 gzip-6 gzip-7 gzip-8 gzip-9"
 ZSTD="zstd zstd-1 zstd-2 zstd-3 zstd-4 zstd-5 zstd-6 zstd-7 zstd-8 zstd-9 zstd-10 zstd-11 zstd-12 zstd-13 zstd-14 zstd-15 zstd-16 zstd-17 zstd-18 zstd-19"
 ZSTDFAST="zstd-fast zstd-fast-1 zstd-fast-2 zstd-fast-3 zstd-fast-4 zstd-fast-5 zstd-fast-6 zstd-fast-7 zstd-fast-8 zstd-fast-9 zstd-fast-10 zstd-fast-20 zstd-fast-30 zstd-fast-40 zstd-fast-50 zstd-fast-60 zstd-fast-70 zstd-fast-80 zstd-fast-90 zstd-fast-100 zstd-fast-500 zstd-fast-1000"
 TYPE="WIKIPEDIA"
+STORAGEPOOL="RAMDISK"
 TESTRESULTS="test_results_$now.txt"
 if [ $# -eq 0 ]
 then
@@ -38,7 +39,7 @@ then
         exit 0
 fi
 
-while getopts "p:t:ribfhc:" OPTION; do
+while getopts "p:t:ribfhc:s:" OPTION; do
         case $OPTION in
 		p)	
 			TESTRESULTS="$OPTARG-$TESTRESULTS"
@@ -88,6 +89,20 @@ while getopts "p:t:ribfhc:" OPTION; do
                         echo "Selected custom compression test using the following algorithms:"
                         echo "$ALGO"
                         ;;
+		s)
+			STORAGEPOOL="$OPTARG"
+			echo "Doing custom ZFS Storage test. This wil do: zpool create testpool $STORAGEPOOL" 
+			echo "This will destroy all data on these drives!"
+			read -p "Are you sure you want to continue? (y/N)" -n 1 -r
+			echo 
+			if [[ $REPLY =~ ^[Yy]$ ]]
+			then
+				echo	# do dangerous stuff
+			else 
+				echo "exiting..."
+				exit 1
+			fi
+			;;
                 h)
                         echo "Usage:"
                         echo "$0 -h "
@@ -149,13 +164,18 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]
 then
         echo "destroy testpool and clean ram of previous broken/canceled tests"
         test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool >> /dev/null
-        sudo rm -f /dev/shm/pooldisk.img
+	if [ "$STORAGEPOOL" == "RAMDISK" ]
+	then
+		STORAGEPOOL="/dev/shm/pooldisk.img"
+		echo "removing /dev/shm/pooldisk.img (RAMDISK)" 
+		sudo rm -f $STORAGEPOOL
 
-        echo "creating virtual pool drive"
-        truncate -s 2000m /dev/shm/pooldisk.img
+        	echo "creating virtual pool drive"
+        	truncate -s 2000m $STORAGEPOOL
+	fi
 
-        echo "creating zfs testpool/fs1"
-        sudo ./zfs/cmd/zpool/zpool create testpool -f -o ashift=12  /dev/shm/pooldisk.img
+        	echo "creating zfs testpool/fs1 on $STORAGEPOOL"
+        	sudo ./zfs/cmd/zpool/zpool create testpool -f -o ashift=12 $STORAGEPOOL
 
 
 	# Downloading and may be uncompressing file 
@@ -184,6 +204,7 @@ then
         echo "Test with $FILENAME file" >> "./$TESTRESULTS"
 	    grep "^model name" /proc/cpuinfo |sort -u >> "./$TESTRESULTS"
 	    grep "^flags" /proc/cpuinfo |sort -u >>  "./$TESTRESULTS"
+	    echo "ZFS Storagepool-Device(s): $STORAGEPOOL" >> "./$TESTRESULTS"
 	    echo "" >> "./$TESTRESULTS"
         echo "starting compression test suite"
 		echo "" >> "./$TESTRESULTS"
@@ -242,7 +263,7 @@ then
         echo "destroying pool"
         test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool 2>&1 >/dev/null
         echo "Cleaning ram"
-        sudo rm -f /dev/shm/pooldisk.img
+        test -e /dev/shm/pooldisk.img && sudo rm -f /dev/shm/pooldisk.img
 
 fi
 
