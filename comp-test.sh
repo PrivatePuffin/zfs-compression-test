@@ -31,6 +31,7 @@ ZSTDFAST="zstd-fast zstd-fast-1 zstd-fast-2 zstd-fast-3 zstd-fast-4 zstd-fast-5 
 TYPE="WIKIPEDIA"
 STORAGEPOOL="RAMDISK"
 TESTRESULTS="test_results_$now.txt"
+TESTRESULTSTERSE="test_results_$now.terse"
 if [ $# -eq 0 ]
 then
         echo "Missing options!"
@@ -42,7 +43,8 @@ fi
 while getopts "p:t:ribfhc:s:" OPTION; do
         case $OPTION in
 		p)	
-			TESTRESULTS="$OPTARG-$TESTRESULTS"
+			TESTRESULTS="$OPTARG-$TESTRESULTS.txt"
+			TESTRESULTSTERSE="$OPTARG-$TESTRESULTS.terse"
 			echo "Results file of the test is called: ./$TESTRESULTS"
 			
 			;;
@@ -136,6 +138,9 @@ while getopts "p:t:ribfhc:s:" OPTION; do
 
         esac
 done
+
+echo "creating output folder"
+mkdir ./TMP
 
 echo "checking if you git cloned zfs"
 [ ! -e ./zfs/.git ] && { echo "You need to clone zfs first! # git clone https://github.com/zfsonlinux/zfs"; exit 1; }
@@ -244,9 +249,13 @@ then
 					echo "" >> "./$TESTRESULTS"
 					for rw in $RW
 					do
+						bandwidth=0
 						echo "$rw (de)compression results for $comp" >> "./$TESTRESULTS"
 						echo "Speed:" >> "./$TESTRESULTS"
-						fio ./tests/$io-$rw.fio 2>&1 |grep "MIXED: bw=" >> "./$TESTRESULTS"
+						fio ./tests/$io-$rw.fio --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
+						sed -i '1s/^/'"$comp;$io;$rw;"'/' "./TMP/$comp-$io-$rw.terse"
+						bandwidth=$(awk -F ';' '{print $10}' ./TMP/$comp-$io-$rw.terse)
+						echo "$(($bandwidth/1000)) MB/s" >> "./$TESTRESULTS"
 						echo "" >> "./$TESTRESULTS"
 						rm -f /testpool/fs1/*
 					done
@@ -260,7 +269,9 @@ then
 			echo ""  >> "./$TESTRESULTS"
 			sudo ./zfs/cmd/zfs/zfs destroy testpool/fs1
         done
-
+		
+		cat ./TMP/*.terse > "./$TESTRESULTSTERSE"
+		rm -rf ./TMP
         echo "compression test finished"
         echo "destroying pool"
         test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool 2>&1 >/dev/null
@@ -283,4 +294,5 @@ echo "Done."
 if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]
 then
 echo "compression results written to ./$TESTRESULTS"
+echo "Exported results to ./$TESTRESULTSTERSE"
 fi
