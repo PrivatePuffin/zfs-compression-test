@@ -228,12 +228,14 @@ then
 			fi
 			for comp in $ALGO
 			do
+				echo ""
 				echo "running benchmarks for $comp"
 				sudo ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
 				if [ $? -ne 0 ];
 				then
 					echo "Could not set compression to $comp! Skipping test."
 				else
+					echo "Running compression ratio test"
 					echo “$io Benchmark Results for $comp” >> "./$TESTRESULTS"
 					dd if=./$FILENAME of=/testpool/fs1/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
 					echo "Compression Ratio:" >> "./$TESTRESULTS"
@@ -249,6 +251,7 @@ then
 					echo "" >> "./$TESTRESULTS"
 					for rw in $RW
 					do
+						echo "Running $rw bandwidth test"
 						bandwidth=0
 						echo "$rw (de)compression results for $comp" >> "./$TESTRESULTS"
 						echo "Speed:" >> "./$TESTRESULTS"
@@ -264,6 +267,7 @@ then
 					echo "" >> "./$TESTRESULTS"
 				fi
 			done
+			echo ""
 			echo ""  >> "./$TESTRESULTS"
 			echo ""  >> "./$TESTRESULTS"
 			echo ""  >> "./$TESTRESULTS"
