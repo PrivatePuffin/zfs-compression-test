@@ -274,7 +274,7 @@ then
 			sudo ./zfs/cmd/zfs/zfs destroy testpool/fs1
         done
 		
-		cat ./TMP/*.terse > "./$TESTRESULTSTERSE"
+		cat ./Terse.Template ./TMP/*.terse > "./$TESTRESULTSTERSE"
 		rm -rf ./TMP
         echo "compression test finished"
         echo "destroying pool"
