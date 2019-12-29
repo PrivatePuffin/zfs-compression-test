@@ -2,7 +2,6 @@
 #Automated ZFS compressiontest
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-echo "current branch it tested at $TEST"
 git fetch
 git update-index -q --refresh
 CHANGED=$(git diff --name-only origin/$BRANCH)
@@ -74,7 +73,7 @@ while getopts "p:t:ribfhc:s:" OPTION; do
                         ;;
                 b)
                         MODE="BASIC"
-			IO="sequential"
+						IO="sequential"
                         ALGO="off lz4 zle lzjb gzip zstd"
                         echo "Selected BASIC compression test"
                         ;;
@@ -167,7 +166,7 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]
 then
         echo "destroy testpool and clean ram of previous broken/canceled tests"
         test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool >> /dev/null
-	if [ "$STORAGEPOOL" == "RAMDISK" ]
+	if [ $STORAGEPOOL = "RAMDISK" ]
 	then
 		STORAGEPOOL="/dev/shm/pooldisk.img"
 		echo "removing /dev/shm/pooldisk.img (RAMDISK)" 

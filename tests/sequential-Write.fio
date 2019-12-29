@@ -1,6 +1,7 @@
 [workload]
 bs=128k
-ioengine=libaio
+fallocate=0
+ioengine=psync
 iodepth=1
 numjobs=16
 direct=1
@@ -11,6 +12,8 @@ rw=write
 thread
 unified_rw_reporting=1
 group_reporting=1
+randseed=1234
 buffer_compress_percentage=66
 refill_buffers
+buffer_compress_chunk=0
 buffer_pattern=0xdeadbeef
