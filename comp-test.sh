@@ -1,7 +1,7 @@
 #!/bin/bash
 #Automated ZFS compressiontest
 
-BRANCH="master"
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 git fetch
 git update-index -q --refresh
 CHANGED=$(git diff --name-only origin/$BRANCH)
@@ -31,6 +31,7 @@ ZSTDFAST="zstd-fast zstd-fast-1 zstd-fast-2 zstd-fast-3 zstd-fast-4 zstd-fast-5 
 TYPE="WIKIPEDIA"
 STORAGEPOOL="RAMDISK"
 TESTRESULTS="test_results_$now.txt"
+TESTRESULTSTERSE="test_results_$now.terse"
 if [ $# -eq 0 ]
 then
         echo "Missing options!"
@@ -42,7 +43,8 @@ fi
 while getopts "p:t:ribfhc:s:" OPTION; do
         case $OPTION in
 		p)	
-			TESTRESULTS="$OPTARG-$TESTRESULTS"
+			TESTRESULTS="$OPTARG-$TESTRESULTS.txt"
+			TESTRESULTSTERSE="$OPTARG-$TESTRESULTS.terse"
 			echo "Results file of the test is called: ./$TESTRESULTS"
 			
 			;;
@@ -73,7 +75,7 @@ while getopts "p:t:ribfhc:s:" OPTION; do
                         ;;
                 b)
                         MODE="BASIC"
-			IO="sequential"
+						IO="sequential"
                         ALGO="off lz4 zle lzjb gzip zstd"
                         echo "Selected BASIC compression test"
                         ;;
@@ -137,6 +139,9 @@ while getopts "p:t:ribfhc:s:" OPTION; do
         esac
 done
 
+echo "creating output folder"
+mkdir ./TMP
+
 echo "checking if you git cloned zfs"
 [ ! -e ./zfs/.git ] && { echo "You need to clone zfs first! # git clone https://github.com/zfsonlinux/zfs"; exit 1; }
 
@@ -166,7 +171,7 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]
 then
         echo "destroy testpool and clean ram of previous broken/canceled tests"
         test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool >> /dev/null
-	if [ "$STORAGEPOOL" == "RAMDISK" ]
+	if [ $STORAGEPOOL = "RAMDISK" ]
 	then
 		STORAGEPOOL="/dev/shm/pooldisk.img"
 		echo "removing /dev/shm/pooldisk.img (RAMDISK)" 
@@ -223,12 +228,14 @@ then
 			fi
 			for comp in $ALGO
 			do
+				echo ""
 				echo "running benchmarks for $comp"
 				sudo ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
 				if [ $? -ne 0 ];
 				then
 					echo "Could not set compression to $comp! Skipping test."
 				else
+					echo "Running compression ratio test"
 					echo “$io Benchmark Results for $comp” >> "./$TESTRESULTS"
 					dd if=./$FILENAME of=/testpool/fs1/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
 					echo "Compression Ratio:" >> "./$TESTRESULTS"
@@ -244,9 +251,14 @@ then
 					echo "" >> "./$TESTRESULTS"
 					for rw in $RW
 					do
+						echo "Running $rw bandwidth test"
+						bandwidth=0
 						echo "$rw (de)compression results for $comp" >> "./$TESTRESULTS"
 						echo "Speed:" >> "./$TESTRESULTS"
-						fio ./tests/$io-$rw.fio 2>&1 |grep "MIXED: bw=" >> "./$TESTRESULTS"
+						fio ./tests/$io-$rw.fio --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
+						sed -i '1s/^/'"$comp;$io;$rw;"'/' "./TMP/$comp-$io-$rw.terse"
+						bandwidth=$(awk -F ';' '{print $10}' ./TMP/$comp-$io-$rw.terse)
+						echo "$(($bandwidth/1000)) MB/s" >> "./$TESTRESULTS"
 						echo "" >> "./$TESTRESULTS"
 						rm -f /testpool/fs1/*
 					done
@@ -255,12 +267,15 @@ then
 					echo "" >> "./$TESTRESULTS"
 				fi
 			done
+			echo ""
 			echo ""  >> "./$TESTRESULTS"
 			echo ""  >> "./$TESTRESULTS"
 			echo ""  >> "./$TESTRESULTS"
 			sudo ./zfs/cmd/zfs/zfs destroy testpool/fs1
         done
-
+		
+		cat ./TMP/*.terse > "./$TESTRESULTSTERSE"
+		rm -rf ./TMP
         echo "compression test finished"
         echo "destroying pool"
         test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool 2>&1 >/dev/null
@@ -283,4 +298,5 @@ echo "Done."
 if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]
 then
 echo "compression results written to ./$TESTRESULTS"
+echo "Exported results to ./$TESTRESULTSTERSE"
 fi
