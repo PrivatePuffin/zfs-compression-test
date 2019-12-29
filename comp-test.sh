@@ -1,7 +1,8 @@
 #!/bin/bash
 #Automated ZFS compressiontest
 
-BRANCH="master"
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "current branch it tested at $TEST"
 git fetch
 git update-index -q --refresh
 CHANGED=$(git diff --name-only origin/$BRANCH)
