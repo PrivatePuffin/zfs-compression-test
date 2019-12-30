@@ -289,7 +289,7 @@ then
 						echo "Speed:" >> "./$TESTRESULTS"
 						fio ./tests/$io-$rw.fio --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
 						
-						if [ "$1" = "--check" ]
+						if [ "$OS" = "FreeBSD" ]
 						then
 							sed -i '' '1s/^/'"$comp;$io;$rw;$compressionratio;"'/' "./TMP/$comp-$io-$rw.terse"
 						else
