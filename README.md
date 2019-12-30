@@ -48,4 +48,4 @@ When finished you'll have a .txt file in the zfs-compression-test directory, con
 - Input sanitsaion
 
 ### LICENCE
-This work is dual licenced under GPLv3 and BSD
+This work is dual licenced under GPLv2 and BSD
