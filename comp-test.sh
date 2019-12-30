@@ -288,7 +288,14 @@ then
 						echo "$rw (de)compression results for $comp" >> "./$TESTRESULTS"
 						echo "Speed:" >> "./$TESTRESULTS"
 						fio ./tests/$io-$rw.fio --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
-						sed -i '' '1s/^/'"$comp;$io;$rw;$compressionratio;"'/' "./TMP/$comp-$io-$rw.terse"
+						
+						if [ "$1" = "--check" ]
+						then
+							sed -i '' '1s/^/'"$comp;$io;$rw;$compressionratio;"'/' "./TMP/$comp-$io-$rw.terse"
+						else
+							sed -i '1s/^/'"$comp;$io;$rw;$compressionratio;"'/' "./TMP/$comp-$io-$rw.terse"
+						fi
+						
 						bandwidth=$(awk -F ';' '{print $11}' ./TMP/$comp-$io-$rw.terse)
 						echo "$(($bandwidth/1000)) MB/s" >> "./$TESTRESULTS"
 						echo "" >> "./$TESTRESULTS"
