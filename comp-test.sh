@@ -207,7 +207,7 @@ then
 	fi
 
         	echo "creating zfs testpool/fs1 on $STORAGEPOOL"
-        	sudo ./zfs/cmd/zpool/zpool create testpool -f -o ashift=12 $STORAGEPOOL
+		sudo ./zfs/cmd/zpool/zpool create -f -o ashift=12 testpool $STORAGEPOOL
 
 
 	# Downloading and may be uncompressing file 
