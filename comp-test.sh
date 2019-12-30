@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #Automated ZFS compressiontest
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -32,6 +32,7 @@ TYPE="WIKIPEDIA"
 STORAGEPOOL="RAMDISK"
 TESTRESULTS="test_results_$now.txt"
 TESTRESULTSTERSE="test_results_$now.terse"
+OS="$(uname -s)"
 if [ $# -eq 0 ]
 then
         echo "Missing options!"
@@ -39,6 +40,24 @@ then
         echo ""
         exit 0
 fi
+
+sha256sum () {
+	if [ "$OS" = "FreeBSD" ]
+	then
+		if [ "$1" = "--check" ]
+		then
+			LINE="$(cat -)"
+			CSUM="${LINE#* = }"
+			F1="${LINE#*(}"
+			FILE="${F1%)*}"
+			sha256 -c "$CSUM" $FILE
+		else
+			sha256 "$@"
+		fi
+	else
+		/bin/sha256sum "$@"
+	fi
+}
 
 while getopts "p:t:ribfhc:s:" OPTION; do
         case $OPTION in
@@ -93,7 +112,7 @@ while getopts "p:t:ribfhc:s:" OPTION; do
                         ;;
 		s)
 			STORAGEPOOL="$OPTARG"
-			echo "Doing custom ZFS Storage test. This wil do: zpool create testpool $STORAGEPOOL" 
+			echo "Doing custom ZFS Storage test. This will do: zpool create testpool $STORAGEPOOL"
 			echo "This will destroy all data on these drives!"
 			read -p "Are you sure you want to continue? (y/N)" -n 1 -r
 			echo 
@@ -173,12 +192,18 @@ then
         test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool >> /dev/null
 	if [ $STORAGEPOOL = "RAMDISK" ]
 	then
-		STORAGEPOOL="/dev/shm/pooldisk.img"
-		echo "removing /dev/shm/pooldisk.img (RAMDISK)" 
-		sudo rm -f $STORAGEPOOL
+		if [ "$OS" = "FreeBSD" ]
+		then
+			MDDEV="$(mdconfig -a -t malloc -s 2000m)"
+			STORAGEPOOL="/dev/${MDDEV}"
+		else
+			STORAGEPOOL="/dev/shm/pooldisk.img"
+			echo "removing /dev/shm/pooldisk.img (RAMDISK)"
+			sudo rm -f $STORAGEPOOL
 
-        	echo "creating virtual pool drive"
-        	truncate -s 2000m $STORAGEPOOL
+			echo "creating virtual pool drive"
+			truncate -s 2000m $STORAGEPOOL
+		fi
 	fi
 
         	echo "creating zfs testpool/fs1 on $STORAGEPOOL"
@@ -206,11 +231,16 @@ then
 			exit 1
 			;;
 	esac
-        chksum=`sha256sum $FILENAME`
+        chksum=$(sha256sum $FILENAME)
         echo "" >> "./$TESTRESULTS"
         echo "Test with $FILENAME file" >> "./$TESTRESULTS"
-	    grep "^model name" /proc/cpuinfo |sort -u >> "./$TESTRESULTS"
-	    grep "^flags" /proc/cpuinfo |sort -u >>  "./$TESTRESULTS"
+	if [ "$OS" = "FreeBSD" ]
+	then
+		echo "$(sysctl -n hw.ncpu) x $(sysctl -n hw.model)" >> "./$TESTRESULTS"
+	else
+		grep "^model name" /proc/cpuinfo |sort -u >> "./$TESTRESULTS"
+		grep "^flags" /proc/cpuinfo |sort -u >>  "./$TESTRESULTS"
+	fi
 	    echo "ZFS Storagepool-Device(s): $STORAGEPOOL" >> "./$TESTRESULTS"
 	    echo "" >> "./$TESTRESULTS"
         echo "starting compression test suite"
@@ -245,7 +275,7 @@ then
 					echo ""  >> "./$TESTRESULTS"
 					echo "verifying testhash"
 					cd /testpool/fs1/
-					chkresult=`echo "$chksum" | sha256sum --check`
+					chkresult=$(echo "$chksum" | sha256sum --check)
 					cd - >> /dev/null
 					echo "hashcheck result: $chkresult" >> "./$TESTRESULTS"
 					echo "" >> "./$TESTRESULTS"
@@ -283,6 +313,7 @@ then
         test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool 2>&1 >/dev/null
         echo "Cleaning ram"
         test -e /dev/shm/pooldisk.img && sudo rm -f /dev/shm/pooldisk.img
+	[ -n "${MDDEV}" ] && sudo mdconfig -d -u ${MDDEV}
 
 fi
 
