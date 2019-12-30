@@ -46,3 +46,6 @@ When finished you'll have a .txt file in the zfs-compression-test directory, con
 - Automatic run of tests and zloop
 - Combinations of Tests, Zloop and Compression
 - Input sanitsaion
+
+### LICENCE
+This work is dual licenced under GPLv2 and BSD
