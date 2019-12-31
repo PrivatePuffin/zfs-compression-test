@@ -10,6 +10,7 @@ size=100m
 directory=/testpool/fs1/
 rw=write
 thread
+time_based
 unified_rw_reporting=1
 group_reporting=1
 randseed=1234
