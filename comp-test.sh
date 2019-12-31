@@ -194,7 +194,7 @@ then
 	then
 		if [ "$OS" = "FreeBSD" ]
 		then
-			MDDEV="$(mdconfig -a -t malloc -s 2000m)"
+			MDDEV="$(mdconfig -a -t swap -s 2000m)"
 			STORAGEPOOL="/dev/${MDDEV}"
 		else
 			STORAGEPOOL="/dev/shm/pooldisk.img"
