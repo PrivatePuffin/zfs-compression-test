@@ -22,7 +22,7 @@ now=$(date +%s)
 
 MODE="NONE"
 IO="sequential random"
-RW="Write Read ReadWrite"
+RW="writes reads readwrite"
 INSTALL="FALSE"
 RESET="FALSE"
 GZIP="gzip gzip-1 gzip-2 gzip-3 gzip-4 gzip-5 gzip-6 gzip-7 gzip-8 gzip-9"
@@ -33,6 +33,20 @@ STORAGEPOOL="RAMDISK"
 TESTRESULTS="test_results_$now.txt"
 TESTRESULTSTERSE="test_results_$now.terse"
 OS="$(uname -s)"
+
+#Export fio settings
+export SYNC_TYPE=0
+export DIRECT=1
+export NUMJOBS=16
+export DIRECTORY="/testpool/fs1/"
+export RUNTIME=3
+export BLOCKSIZE="128k"
+export FILESIZE="100m"
+export FILE_SIZE="100m"
+
+#ZFS Fio Customisations
+MODIFIER="--randseed=1234 --unified_rw_reporting=1 --refill_buffers --buffer_pattern=0xdeadbeef --buffer_compress_chunk=0"
+
 if [ $# -eq 0 ]
 then
         echo "Missing options!"
@@ -287,7 +301,18 @@ then
 						bandwidth=0
 						echo "$rw (de)compression results for $comp" >> "./$TESTRESULTS"
 						echo "Speed:" >> "./$TESTRESULTS"
-						fio ./tests/$io-$rw.fio --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
+						
+						if [ $rw = "reads" -o $rw = "readwrite" ]
+						then
+							fio ./zfs/tests/zfs-tests/tests/perf/fio/mkfiles.fio $MODIFIER >> /dev/null
+						fi
+						
+						if [ $io = "sequential" ] && [ $rw = "readwrite" ] 
+						then
+							fio ./fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
+						else
+							fio ./zfs/tests/zfs-tests/tests/perf/fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
+						fi
 						
 						if [ "$OS" = "FreeBSD" ]
 						then
