@@ -305,6 +305,9 @@ then
 						if [ $rw = "reads" -o $rw = "readwrite" ]
 						then
 							fio ./fio/mkfiles.fio $MODIFIER >> /dev/null
+							echo " Fioratio:"
+							fiocompressionratio=$(./zfs/cmd/zfs/zfs get -H -o value compressratio testpool/fs1)
+							echo "$fiocompressionratio"
 						fi
 						
 						if [ $io = "sequential" ] && [ $rw = "readwrite" ] 
