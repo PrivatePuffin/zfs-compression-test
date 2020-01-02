@@ -43,6 +43,7 @@ export RUNTIME=3
 export BLOCKSIZE="128k"
 export FILESIZE="100m"
 export FILE_SIZE="100m"
+export RANDSEED=1234
 
 #ZFS Fio Customisations
 MODIFIER="--randseed=1234 --unified_rw_reporting=1 --refill_buffers --buffer_pattern=0xdeadbeef --buffer_compress_chunk=0"
