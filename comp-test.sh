@@ -304,14 +304,14 @@ then
 						
 						if [ $rw = "reads" -o $rw = "readwrite" ]
 						then
-							fio ./zfs/tests/zfs-tests/tests/perf/fio/mkfiles.fio $MODIFIER >> /dev/null
+							fio ./fio/mkfiles.fio $MODIFIER >> /dev/null
 						fi
 						
 						if [ $io = "sequential" ] && [ $rw = "readwrite" ] 
 						then
 							fio ./fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
 						else
-							fio ./zfs/tests/zfs-tests/tests/perf/fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
+							fio ./fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
 						fi
 						
 						if [ "$OS" = "FreeBSD" ]
