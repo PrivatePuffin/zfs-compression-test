@@ -28,6 +28,6 @@ filesize=${FILE_SIZE}
 randseed=${RANDSEED}
 buffer_compress_percentage=33
 buffer_pattern=0xdeadbeef
-buffer_compress_chunk=0
+buffer_compress_chunk=4K
 
 [job]
