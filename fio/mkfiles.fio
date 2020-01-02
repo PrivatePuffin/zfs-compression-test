@@ -26,7 +26,7 @@ directory=${DIRECTORY}
 numjobs=${NUMJOBS}
 filesize=${FILE_SIZE}
 randseed=${RANDSEED}
-buffer_compress_percentage=40
+buffer_compress_percentage=50
 buffer_pattern=0xdeadbeef
 buffer_compress_chunk=0
 
