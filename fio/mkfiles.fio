@@ -26,7 +26,7 @@ directory=${DIRECTORY}
 numjobs=${NUMJOBS}
 filesize=${FILE_SIZE}
 randseed=${RANDSEED}
-buffer_compress_percentage=1
+buffer_compress_percentage=10
 buffer_pattern='enwik4.txt'
 buffer_compress_chunk=0
 
