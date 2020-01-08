@@ -27,7 +27,7 @@ numjobs=${NUMJOBS}
 filesize=${FILE_SIZE}
 randseed=${RANDSEED}
 buffer_compress_percentage=${COMPPERCENT}
-buffer_pattern=0xdeafbeef
+buffer_pattern=0xdeadbeef
 buffer_compress_chunk=${COMPCHUNK}
 
 [job]
