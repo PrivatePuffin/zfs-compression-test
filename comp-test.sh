@@ -43,9 +43,12 @@ export RUNTIME=3
 export BLOCKSIZE="128k"
 export FILESIZE="100m"
 export FILE_SIZE="100m"
+export RANDSEED=1234
+export COMPPERCENT=50
+export COMPCHUNK=0
 
 #ZFS Fio Customisations
-MODIFIER="--randseed=1234 --unified_rw_reporting=1 --refill_buffers --buffer_pattern=0xdeadbeef --buffer_compress_chunk=0"
+MODIFIER="--unified_rw_reporting=1"
 
 if [ $# -eq 0 ]
 then
@@ -307,12 +310,7 @@ then
 							fio ./zfs/tests/zfs-tests/tests/perf/fio/mkfiles.fio $MODIFIER >> /dev/null
 						fi
 						
-						if [ $io = "sequential" ] && [ $rw = "readwrite" ] 
-						then
-							fio ./fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
-						else
-							fio ./zfs/tests/zfs-tests/tests/perf/fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
-						fi
+						fio ./zfs/tests/zfs-tests/tests/perf/fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
 						
 						if [ "$OS" = "FreeBSD" ]
 						then
