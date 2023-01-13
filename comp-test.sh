@@ -31,6 +31,8 @@ STORAGEPOOL="RAMDISK"
 TESTRESULTS="test_results_$now.txt"
 TESTRESULTSTERSE="test_results_$now.terse"
 OS="$(uname -s)"
+ZFS_CMD=./zfs/cmd/zfs/zfs
+ZPOOL_CMD=./zfs/cmd/zpool/zpool
 
 #Export fio settings
 export SYNC_TYPE=0
@@ -195,9 +197,19 @@ if [ $INSTALL = "TRUE" ]; then
     cd ..
 fi
 
+if [ ! -e "$ZPOOL_CMD" ] ; then
+    echo "missing command for 'zpool': $ZPOOL_CMD"
+    exit 1
+fi
+
+if [ ! -e "$ZFS_CMD" ] ; then
+    echo "missing command for 'zfs': $ZFS_CMD"
+    exit 1
+fi
+
 if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
     echo "destroy testpool and clean ram of previous broken/canceled tests"
-    test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool >> /dev/null
+    sudo $ZPOOL_CMD destroy testpool >> /dev/null
     if [ $STORAGEPOOL = "RAMDISK" ]; then
         if [ "$OS" = "FreeBSD" ]; then
             MDDEV="$(mdconfig -a -t swap -s 2000m)"
@@ -213,7 +225,7 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
     fi
 
     echo "creating zfs testpool/fs1 on $STORAGEPOOL"
-    sudo ./zfs/cmd/zpool/zpool create -f -o ashift=12 testpool $STORAGEPOOL
+    sudo $ZPOOL_CMD create -f -o ashift=12 testpool $STORAGEPOOL
 
     # Downloading and may be uncompressing file
     FILENAME=""
@@ -250,16 +262,16 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
 
     for io in $IO; do
         echo "Starting $io compression-performance tests"
-        sudo ./zfs/cmd/zfs/zfs create testpool/fs1
+        sudo $ZFS_CMD create testpool/fs1
         if [ $io = "random" ]; then
-            sudo ./zfs/cmd/zfs/zfs set recordsize=8K  testpool/fs1
+            sudo $ZFS_CMD set recordsize=8K  testpool/fs1
         else
-            sudo ./zfs/cmd/zfs/zfs set recordsize=1M  testpool/fs1
+            sudo $ZFS_CMD set recordsize=1M  testpool/fs1
         fi
         for comp in $ALGO; do
             echo ""
             echo "running benchmarks for $comp"
-            sudo ./zfs/cmd/zfs/zfs set compression=$comp testpool/fs1
+            sudo $ZFS_CMD set compression=$comp testpool/fs1
             if [ $? -ne 0 ]; then
                 echo "Could not set compression to $comp! Skipping test."
             else
@@ -267,7 +279,7 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
                 echo “$io Benchmark Results for $comp” >> "./$TESTRESULTS"
                 dd if=./$FILENAME of=/testpool/fs1/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
                 echo "Compression Ratio:" >> "./$TESTRESULTS"
-                compressionratio=$(./zfs/cmd/zfs/zfs get -H -o value compressratio testpool/fs1)
+                compressionratio=$($ZFS_CMD get -H -o value compressratio testpool/fs1)
                 echo "$compressionratio" >> "./$TESTRESULTS"
                 compressionratio=${compressionratio%?}
                 echo ""  >> "./$TESTRESULTS"
@@ -311,14 +323,14 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
         echo ""  >> "./$TESTRESULTS"
         echo ""  >> "./$TESTRESULTS"
         echo ""  >> "./$TESTRESULTS"
-        sudo ./zfs/cmd/zfs/zfs destroy testpool/fs1
+        sudo $ZFS_CMD destroy testpool/fs1
     done
 
     cat ./Terse.Template ./TMP/*.terse > "./$TESTRESULTSTERSE"
     rm -rf ./TMP
     echo "compression test finished"
     echo "destroying pool"
-    test -f ./zfs/cmd/zpool/zpool && sudo ./zfs/cmd/zpool/zpool destroy testpool 2>&1 >/dev/null
+    sudo $ZPOOL_CMD destroy testpool 2>&1 >/dev/null
     echo "Cleaning ram"
     test -e /dev/shm/pooldisk.img && sudo rm -f /dev/shm/pooldisk.img
     [ -n "${MDDEV}" ] && sudo mdconfig -d -u ${MDDEV}
