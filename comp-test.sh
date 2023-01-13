@@ -73,7 +73,7 @@ sha256sum () {
     fi
 }
 
-while getopts "p:t:ribfhc:s:" OPTION; do
+while getopts "p:t:ribfhc:s:S" OPTION; do
     case $OPTION in
         p)
             TESTRESULTS="$OPTARG-$TESTRESULTS.txt"
@@ -133,6 +133,15 @@ while getopts "p:t:ribfhc:s:" OPTION; do
                 echo "OK. Continuing..."
             else
                 echo "exiting..."
+                exit 1
+            fi
+            ;;
+        S)
+            echo "Using system-wide ZFS installation"
+            ZFS_CMD=`sudo which zfs`
+            ZPOOL_CMD=`sudo which zpool`
+            if [ -z "$ZFS_CMD" -o -z "$ZPOOL_CMD" ]; then
+                echo "No system-wide ZFS installation found, please install"
                 exit 1
             fi
             ;;
