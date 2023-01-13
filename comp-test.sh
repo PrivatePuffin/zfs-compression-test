@@ -27,13 +27,13 @@ GZIP="gzip gzip-1 gzip-2 gzip-3 gzip-4 gzip-5 gzip-6 gzip-7 gzip-8 gzip-9"
 ZSTD="zstd zstd-1 zstd-2 zstd-3 zstd-4 zstd-5 zstd-6 zstd-7 zstd-8 zstd-9 zstd-10 zstd-11 zstd-12 zstd-13 zstd-14 zstd-15 zstd-16 zstd-17 zstd-18 zstd-19"
 ZSTDFAST="zstd-fast zstd-fast-1 zstd-fast-2 zstd-fast-3 zstd-fast-4 zstd-fast-5 zstd-fast-6 zstd-fast-7 zstd-fast-8 zstd-fast-9 zstd-fast-10 zstd-fast-20 zstd-fast-30 zstd-fast-40 zstd-fast-50 zstd-fast-60 zstd-fast-70 zstd-fast-80 zstd-fast-90 zstd-fast-100 zstd-fast-500 zstd-fast-1000"
 TYPE="WIKIPEDIA"
-STORAGEPOOL="RAMDISK"
 TESTRESULTS="test_results_$now.txt"
 TESTRESULTSTERSE="test_results_$now.terse"
 OS="$(uname -s)"
 ZFS_CMD=./zfs/cmd/zfs/zfs
 ZPOOL_CMD=./zfs/cmd/zpool/zpool
 TESTPOOL_MANAGE="TRUE"
+TESTPOOL_VDEVS="RAMDISK"
 
 #Export fio settings
 export SYNC_TYPE=0
@@ -125,8 +125,8 @@ while getopts "p:t:ribfhc:s:S" OPTION; do
             echo "$ALGO"
             ;;
         s)
-            STORAGEPOOL="$OPTARG"
-            echo "Doing custom ZFS Storage test. This will do: zpool create testpool $STORAGEPOOL"
+            TESTPOOL_VDEVS="$OPTARG"
+            echo "Doing custom ZFS Storage test. This will do: zpool create testpool $TESTPOOL_VDEVS"
             echo "This will destroy all data on these drives!"
             read -p "Are you sure you want to continue? (y/N)" -n 1 -r
             echo
@@ -221,22 +221,22 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
     if [ $TESTPOOL_MANAGE = "TRUE" ] ; then
         echo "destroy testpool and clean ram of previous broken/canceled tests"
         sudo $ZPOOL_CMD destroy testpool >> /dev/null
-        if [ $STORAGEPOOL = "RAMDISK" ]; then
+        if [ $TESTPOOL_VDEVS = "RAMDISK" ]; then
             if [ "$OS" = "FreeBSD" ]; then
                 MDDEV="$(mdconfig -a -t swap -s 2000m)"
-                STORAGEPOOL="/dev/${MDDEV}"
+                TESTPOOL_VDEVS="/dev/${MDDEV}"
             else
-                STORAGEPOOL="/dev/shm/pooldisk.img"
+                TESTPOOL_VDEVS="/dev/shm/pooldisk.img"
                 echo "removing /dev/shm/pooldisk.img (RAMDISK)"
-                sudo rm -f $STORAGEPOOL
+                sudo rm -f $TESTPOOL_VDEVS
 
                 echo "creating virtual pool drive"
-                truncate -s 2000m $STORAGEPOOL
+                truncate -s 2000m $TESTPOOL_VDEVS
             fi
         fi
 
-        echo "creating zfs testpool/fs1 on $STORAGEPOOL"
-        sudo $ZPOOL_CMD create -f -o ashift=12 testpool $STORAGEPOOL
+        echo "creating zfs testpool/fs1 on $TESTPOOL_VDEVS"
+        sudo $ZPOOL_CMD create -f -o ashift=12 testpool $TESTPOOL_VDEVS
     fi
 
     # Downloading and may be uncompressing file
@@ -267,7 +267,7 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
         grep "^model name" /proc/cpuinfo |sort -u >> "./$TESTRESULTS"
         grep "^flags" /proc/cpuinfo |sort -u >>  "./$TESTRESULTS"
     fi
-    echo "ZFS Storagepool-Device(s): $STORAGEPOOL" >> "./$TESTRESULTS"
+    echo "ZFS Storagepool-Device(s): $TESTPOOL_VDEVS" >> "./$TESTRESULTS"
     echo "" >> "./$TESTRESULTS"
     echo "starting compression test suite"
     echo "" >> "./$TESTRESULTS"
