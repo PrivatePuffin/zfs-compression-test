@@ -319,9 +319,11 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
                     echo "Speed:" >> "./$TESTRESULTS"
 
                     if [ $rw = "reads" -o $rw = "readwrite" ]; then
+                        echo running fio ./zfs/tests/zfs-tests/tests/perf/fio/mkfiles.fio $MODIFIER
                         fio ./zfs/tests/zfs-tests/tests/perf/fio/mkfiles.fio $MODIFIER >> /dev/null
                     fi
 
+                    echo running fio ./zfs/tests/zfs-tests/tests/perf/fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse"
                     fio ./zfs/tests/zfs-tests/tests/perf/fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
 
                     if [ "$OS" = "FreeBSD" ]; then
