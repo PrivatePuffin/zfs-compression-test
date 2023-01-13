@@ -35,12 +35,13 @@ ZPOOL_CMD=./zfs/cmd/zpool/zpool
 TESTPOOL_MANAGE="TRUE"
 TESTPOOL_VDEVS="RAMDISK"
 TESTPOOL_NAME="testpool"
+TESTDATASET="$TESTPOOL_NAME/fs1"
 
 #Export fio settings
 export SYNC_TYPE=0
 export DIRECT=1
 export NUMJOBS=16
-export DIRECTORY="/$TESTPOOL_NAME/fs1/"
+export DIRECTORY="/$TESTDATASET/"
 export RUNTIME=3
 export BLOCKSIZE="128k"
 export FILESIZE="100m"
@@ -275,34 +276,34 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
 
     for io in $IO; do
         echo "Starting $io compression-performance tests"
-        sudo $ZFS_CMD create $TESTPOOL_NAME/fs1
+        sudo $ZFS_CMD create $TESTDATASET
         if [ $io = "random" ]; then
-            sudo $ZFS_CMD set recordsize=8K  $TESTPOOL_NAME/fs1
+            sudo $ZFS_CMD set recordsize=8K  $TESTDATASET
         else
-            sudo $ZFS_CMD set recordsize=1M  $TESTPOOL_NAME/fs1
+            sudo $ZFS_CMD set recordsize=1M  $TESTDATASET
         fi
         for comp in $ALGO; do
             echo ""
             echo "running benchmarks for $comp"
-            sudo $ZFS_CMD set compression=$comp $TESTPOOL_NAME/fs1
+            sudo $ZFS_CMD set compression=$comp $TESTDATASET
             if [ $? -ne 0 ]; then
                 echo "Could not set compression to $comp! Skipping test."
             else
                 echo "Running compression ratio test"
                 echo “$io Benchmark Results for $comp” >> "./$TESTRESULTS"
-                dd if=./$FILENAME of=/$TESTPOOL_NAME/fs1/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
+                dd if=./$FILENAME of=/$TESTDATASET/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
                 echo "Compression Ratio:" >> "./$TESTRESULTS"
-                compressionratio=$($ZFS_CMD get -H -o value compressratio $TESTPOOL_NAME/fs1)
+                compressionratio=$($ZFS_CMD get -H -o value compressratio $TESTDATASET)
                 echo "$compressionratio" >> "./$TESTRESULTS"
                 compressionratio=${compressionratio%?}
                 echo ""  >> "./$TESTRESULTS"
                 echo "verifying testhash"
-                cd /$TESTPOOL_NAME/fs1/
+                cd /$TESTDATASET/
                 chkresult=$(echo "$chksum" | sha256sum --check)
                 cd - >> /dev/null
                 echo "hashcheck result: $chkresult" >> "./$TESTRESULTS"
                 echo "" >> "./$TESTRESULTS"
-                rm /$TESTPOOL_NAME/fs1/$FILENAME
+                rm /$TESTDATASET/$FILENAME
                 echo "" >> "./$TESTRESULTS"
                 for rw in $RW; do
                     echo "Running $rw bandwidth test"
@@ -325,7 +326,7 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
                     bandwidth=$(awk -F ';' '{print $11}' ./TMP/$comp-$io-$rw.terse)
                     echo "$(($bandwidth/1000)) MB/s" >> "./$TESTRESULTS"
                     echo "" >> "./$TESTRESULTS"
-                    rm -f /$TESTPOOL_NAME/fs1/*
+                    rm -f /$TESTDATASET/*
                 done
                 echo ""  >> "./$TESTRESULTS"
                 echo "----" >> "./$TESTRESULTS"
@@ -336,7 +337,7 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
         echo ""  >> "./$TESTRESULTS"
         echo ""  >> "./$TESTRESULTS"
         echo ""  >> "./$TESTRESULTS"
-        sudo $ZFS_CMD destroy $TESTPOOL_NAME/fs1
+        sudo $ZFS_CMD destroy $TESTDATASET
     done
 
     cat ./Terse.Template ./TMP/*.terse > "./$TESTRESULTSTERSE"
