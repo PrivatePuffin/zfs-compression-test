@@ -33,6 +33,7 @@ TESTRESULTSTERSE="test_results_$now.terse"
 OS="$(uname -s)"
 ZFS_CMD=./zfs/cmd/zfs/zfs
 ZPOOL_CMD=./zfs/cmd/zpool/zpool
+TESTPOOL_MANAGE="TRUE"
 
 #Export fio settings
 export SYNC_TYPE=0
@@ -217,24 +218,26 @@ if [ ! -e "$ZFS_CMD" ] ; then
 fi
 
 if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
-    echo "destroy testpool and clean ram of previous broken/canceled tests"
-    sudo $ZPOOL_CMD destroy testpool >> /dev/null
-    if [ $STORAGEPOOL = "RAMDISK" ]; then
-        if [ "$OS" = "FreeBSD" ]; then
-            MDDEV="$(mdconfig -a -t swap -s 2000m)"
-            STORAGEPOOL="/dev/${MDDEV}"
-        else
-            STORAGEPOOL="/dev/shm/pooldisk.img"
-            echo "removing /dev/shm/pooldisk.img (RAMDISK)"
-            sudo rm -f $STORAGEPOOL
+    if [ $TESTPOOL_MANAGE = "TRUE" ] ; then
+        echo "destroy testpool and clean ram of previous broken/canceled tests"
+        sudo $ZPOOL_CMD destroy testpool >> /dev/null
+        if [ $STORAGEPOOL = "RAMDISK" ]; then
+            if [ "$OS" = "FreeBSD" ]; then
+                MDDEV="$(mdconfig -a -t swap -s 2000m)"
+                STORAGEPOOL="/dev/${MDDEV}"
+            else
+                STORAGEPOOL="/dev/shm/pooldisk.img"
+                echo "removing /dev/shm/pooldisk.img (RAMDISK)"
+                sudo rm -f $STORAGEPOOL
 
-            echo "creating virtual pool drive"
-            truncate -s 2000m $STORAGEPOOL
+                echo "creating virtual pool drive"
+                truncate -s 2000m $STORAGEPOOL
+            fi
         fi
-    fi
 
-    echo "creating zfs testpool/fs1 on $STORAGEPOOL"
-    sudo $ZPOOL_CMD create -f -o ashift=12 testpool $STORAGEPOOL
+        echo "creating zfs testpool/fs1 on $STORAGEPOOL"
+        sudo $ZPOOL_CMD create -f -o ashift=12 testpool $STORAGEPOOL
+    fi
 
     # Downloading and may be uncompressing file
     FILENAME=""
@@ -338,11 +341,13 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
     cat ./Terse.Template ./TMP/*.terse > "./$TESTRESULTSTERSE"
     rm -rf ./TMP
     echo "compression test finished"
-    echo "destroying pool"
-    sudo $ZPOOL_CMD destroy testpool 2>&1 >/dev/null
-    echo "Cleaning ram"
-    test -e /dev/shm/pooldisk.img && sudo rm -f /dev/shm/pooldisk.img
-    [ -n "${MDDEV}" ] && sudo mdconfig -d -u ${MDDEV}
+    if [ $TESTPOOL_MANAGE = "TRUE" ]; then
+        echo "destroying pool"
+        sudo $ZPOOL_CMD destroy testpool 2>&1 >/dev/null
+        echo "Cleaning ram"
+        test -e /dev/shm/pooldisk.img && sudo rm -f /dev/shm/pooldisk.img
+        [ -n "${MDDEV}" ] && sudo mdconfig -d -u ${MDDEV}
+    fi
 fi
 
 if [ $RESET = "TRUE" ]; then
