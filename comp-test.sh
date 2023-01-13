@@ -76,7 +76,7 @@ sha256sum () {
     fi
 }
 
-while getopts "p:t:ribfhc:s:S" OPTION; do
+while getopts "p:t:ribfhc:s:SP:" OPTION; do
     case $OPTION in
         p)
             TESTRESULTS="$OPTARG-$TESTRESULTS.txt"
@@ -147,6 +147,13 @@ while getopts "p:t:ribfhc:s:S" OPTION; do
                 echo "No system-wide ZFS installation found, please install"
                 exit 1
             fi
+            ;;
+        P)
+            TESTPOOL_NAME=$OPTARG
+            TESTPOOL_MANAGE="FALSE"
+            TESTDATASET="$TESTPOOL_NAME/fs1"
+            export DIRECTORY="/$TESTDATASET/"
+            echo "Using existing ZFS pool: '$TESTPOOL_NAME'"
             ;;
         h)
             echo "Usage:"
