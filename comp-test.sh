@@ -164,6 +164,10 @@ while getopts "p:t:ribfhc:s:" OPTION; do
             echo "ALL these values are mutually exclusive"
             exit 0
             ;;
+        *)
+            echo "Unknown option -$OPTION"
+            exit 1
+            ;;
     esac
 done
 
