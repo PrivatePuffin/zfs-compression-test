@@ -35,7 +35,10 @@ By now you'll have all dependencies and you'll have a clean git clone in zfs-com
 **Other**
 - **-i** Builds and installs the ZFS testing environment (before running tests)
 - **-r** Completely removes the ZFS testing environment (after running tests)
+- **-S** Use system ZFS environment
 - **-s** Enter custom storagepool-devices. (i.e. ./comp-test.sh -s "raidz1 /dev/disk1 /dev/disk2 /dev/disk3") 
+- **-P** Use existing ZFS Pool for the tests
+- **-F** Size of files used in the 'fio' tests (if you benchmark on real block devices, this should be larger than your RAM)
 - **-h** Displays a help page, which includes a reference to the different commands
 
 When finished you'll have a .txt file in the zfs-compression-test directory, containing the test results
