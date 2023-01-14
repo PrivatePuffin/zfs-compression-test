@@ -177,12 +177,14 @@ while getopts "p:t:ribfhc:s:SP:F:" OPTION; do
             echo "  Other options:"
             echo "   -i                install a ZFS test environment"
             echo "   -r                reset a ZFS test environment"
+            echo "   -S                use system ZFS environment"
             echo "   -p <prefix>       prefix to the test_result files"
             echo "   -t <w|m>          select the type of test:"
             echo "                       w for highly compressible wikipedia file"
             echo "                       m for nearly uncompressible mpeg4 file"
             echo "   -s \"<vdev_setup>\" to use custom devices and raid setups. (DANGEROUS!)"
             echo "      example for custom storagepools: $0 -s \"raidz1 /dev/sga /dev/sgb /dev/sgc\""
+            echo "   -P <pool_name>    use existing ZFS Pool for the tests"
             exit 0
             ;;
         *)
