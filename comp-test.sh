@@ -79,7 +79,7 @@ sha256sum () {
     fi
 }
 
-while getopts "p:t:ribfhc:s:SP:" OPTION; do
+while getopts "p:t:ribfhc:s:SP:F:" OPTION; do
     case $OPTION in
         p)
             TESTRESULTS="$OPTARG-$TESTRESULTS.txt"
@@ -158,34 +158,35 @@ while getopts "p:t:ribfhc:s:SP:" OPTION; do
             export DIRECTORY="/$TESTDATASET/"
             echo "Using existing ZFS pool: '$TESTPOOL_NAME'"
             ;;
+        F)
+            FILE_SIZE=$OPTARG
+            FILESIZE=$OPTARG
+            ;;
         h)
-            echo "Usage:"
-            echo "$0 -h "
-            echo "$0 -b "
-            echo "$0 -basic "
-            echo "$0 -f "
-            echo "$0 -full "
+            echo "Usage: $0 [OPTION]... <-h|-b|-f|-c <\"COMPRESS[ COMPRESS[ ...]]\">>"
             echo ""
-            echo "$0 -i  "
-            echo "$0 -r "
+            echo "  Mandatory operation-mode options (mutually exclusive):"
+            echo "   -h                help (this output)"
+            echo "   -b                execute a basic compression test containing: off lz4 zle lzjb gzip zstd"
+            echo "   -f                execute a full compression test containing all currently available ZFS compression algorithms"
+            echo "   -c <\"comp_list\">  execute on space-separated list of compression types. Supported compression types:"
+            echo "        off lz4 zle lzjb $GZIP"
+            echo "        $ZSTD"
+            echo "        $ZSTDFAST"
             echo ""
-            echo "   -b to execute a basic compression test containing: off lz4 zle lzjb gzip zstd"
-            echo "   -f to execute a full compression test containing all currently available ZFS compression algorithms"
-            echo "   -c to execute the entered list of following compression types: "
-            echo "      off lz4 zle lzjb $GZIP"
-            echo "      $ZSTD"
-            echo "      $ZSTDFAST"
-            echo ""
-            echo "   -i to install a ZFS test environment"
-            echo "   -r to reset a ZFS test environment"
-            echo "   -p to enter a prefix to the test_result files"
-            echo "   -t to select the type of test:"
-            echo "      w for highly compressible wikipedia file"
-            echo "      m for nearly uncompressible mpeg4 file"
-            echo "   -s to use custom devices and raid setups. (DANGEROUS!)"
-            echo "      example for custom storagepools: $0 -s \"raidz1 /dev/sga /dev/sgb /dev/sgc\" "
-            echo "   -h help (this output)"
-            echo "ALL these values are mutually exclusive"
+            echo "  Other options:"
+            echo "   -i                install a ZFS test environment"
+            echo "   -r                reset a ZFS test environment"
+            echo "   -S                use system ZFS environment"
+            echo "   -p <prefix>       prefix to the test_result files"
+            echo "   -t <w|m>          select the type of test:"
+            echo "                       w for highly compressible wikipedia file"
+            echo "                       m for nearly uncompressible mpeg4 file"
+            echo "   -s \"<vdev_setup>\" to use custom devices and raid setups. (DANGEROUS!)"
+            echo "      example for custom storagepools: $0 -s \"raidz1 /dev/sga /dev/sgb /dev/sgc\""
+            echo "   -P <pool_name>    use existing ZFS Pool for the tests"
+            echo "   -F <file_size>    size of files used in the 'fio' tests (if you benchmark on"
+            echo "                     real block devices, this should be larger than your RAM)"
             exit 0
             ;;
         *)
@@ -302,6 +303,7 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
                 echo "Running compression ratio test"
                 echo “$io Benchmark Results for $comp” >> "./$TESTRESULTS"
                 dd if=./$FILENAME of=/$TESTDATASET/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
+                sync
                 echo "Compression Ratio:" >> "./$TESTRESULTS"
                 compressionratio=$($ZFS_CMD get -H -o value compressratio $TESTDATASET)
                 echo "$compressionratio" >> "./$TESTRESULTS"
@@ -324,10 +326,12 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
                     if [ $rw = "reads" -o $rw = "readwrite" ]; then
                         echo running fio ./zfs/tests/zfs-tests/tests/perf/fio/mkfiles.fio $MODIFIER
                         fio ./zfs/tests/zfs-tests/tests/perf/fio/mkfiles.fio $MODIFIER >> /dev/null
+                        sync
                     fi
 
                     echo running fio ./zfs/tests/zfs-tests/tests/perf/fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse"
                     fio ./zfs/tests/zfs-tests/tests/perf/fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
+                    sync
 
                     if [ "$OS" = "FreeBSD" ]; then
                         sed -i '' '1s/^/'"$comp;$io;$rw;$compressionratio;"'/' "./TMP/$comp-$io-$rw.terse"
