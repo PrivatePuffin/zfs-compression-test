@@ -79,7 +79,7 @@ sha256sum () {
     fi
 }
 
-while getopts "p:t:ribfhc:s:SP:" OPTION; do
+while getopts "p:t:ribfhc:s:SP:F:" OPTION; do
     case $OPTION in
         p)
             TESTRESULTS="$OPTARG-$TESTRESULTS.txt"
@@ -157,6 +157,10 @@ while getopts "p:t:ribfhc:s:SP:" OPTION; do
             TESTDATASET="$TESTPOOL_NAME/fs1"
             export DIRECTORY="/$TESTDATASET/"
             echo "Using existing ZFS pool: '$TESTPOOL_NAME'"
+            ;;
+        F)
+            FILE_SIZE=$OPTARG
+            FILESIZE=$OPTARG
             ;;
         h)
             echo "Usage:"
