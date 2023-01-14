@@ -306,6 +306,7 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
                 echo "Running compression ratio test"
                 echo “$io Benchmark Results for $comp” >> "./$TESTRESULTS"
                 dd if=./$FILENAME of=/$TESTDATASET/$FILENAME bs=4M 2>&1 |grep -v records >> "./$TESTRESULTS"
+                sync
                 echo "Compression Ratio:" >> "./$TESTRESULTS"
                 compressionratio=$($ZFS_CMD get -H -o value compressratio $TESTDATASET)
                 echo "$compressionratio" >> "./$TESTRESULTS"
@@ -328,10 +329,12 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
                     if [ $rw = "reads" -o $rw = "readwrite" ]; then
                         echo running fio ./zfs/tests/zfs-tests/tests/perf/fio/mkfiles.fio $MODIFIER
                         fio ./zfs/tests/zfs-tests/tests/perf/fio/mkfiles.fio $MODIFIER >> /dev/null
+                        sync
                     fi
 
                     echo running fio ./zfs/tests/zfs-tests/tests/perf/fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse"
                     fio ./zfs/tests/zfs-tests/tests/perf/fio/$io'_'$rw.fio $MODIFIER --minimal --output="./TMP/$comp-$io-$rw.terse" >> /dev/null
+                    sync
 
                     if [ "$OS" = "FreeBSD" ]; then
                         sed -i '' '1s/^/'"$comp;$io;$rw;$compressionratio;"'/' "./TMP/$comp-$io-$rw.terse"
