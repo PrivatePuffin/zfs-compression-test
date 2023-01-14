@@ -185,6 +185,8 @@ while getopts "p:t:ribfhc:s:SP:F:" OPTION; do
             echo "   -s \"<vdev_setup>\" to use custom devices and raid setups. (DANGEROUS!)"
             echo "      example for custom storagepools: $0 -s \"raidz1 /dev/sga /dev/sgb /dev/sgc\""
             echo "   -P <pool_name>    use existing ZFS Pool for the tests"
+            echo "   -F <file_size>    size of files used in the 'fio' tests (if you benchmark on"
+            echo "                     real block devices, this should be larger than your RAM)"
             exit 0
             ;;
         *)
