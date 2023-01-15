@@ -114,7 +114,7 @@ while getopts "p:t:ribfhc:s:SP:F:" OPTION; do
         b)
             MODE="BASIC"
             IO="sequential"
-            ALGO="off lz4 zle lzjb gzip zstd"
+            ALGO="off lz4 zle lzjb gzip zstd zstd-fast"
             echo "Selected BASIC compression test"
             ;;
         f)
@@ -167,7 +167,7 @@ while getopts "p:t:ribfhc:s:SP:F:" OPTION; do
             echo ""
             echo "  Mandatory operation-mode options (mutually exclusive):"
             echo "   -h                help (this output)"
-            echo "   -b                execute a basic compression test containing: off lz4 zle lzjb gzip zstd"
+            echo "   -b                execute a basic compression test containing: off lz4 zle lzjb gzip zstd zstd-fast"
             echo "   -f                execute a full compression test containing all currently available ZFS compression algorithms"
             echo "   -c <\"comp_list\">  execute on space-separated list of compression types. Supported compression types:"
             echo "        off lz4 zle lzjb $GZIP"
