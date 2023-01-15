@@ -289,10 +289,11 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
         echo "Starting $io compression-performance tests"
         sudo $ZFS_CMD create $TESTDATASET
         if [ $io = "random" ]; then
-            sudo $ZFS_CMD set recordsize=8K  $TESTDATASET
+            recordsize='8K'
         else
-            sudo $ZFS_CMD set recordsize=1M  $TESTDATASET
+            recordsize='1M'
         fi
+        sudo $ZFS_CMD set recordsize=$recordsize  $TESTDATASET
         for comp in $ALGO; do
             echo ""
             echo "running benchmarks for $comp"
@@ -334,12 +335,12 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
                     sync
 
                     if [ "$OS" = "FreeBSD" ]; then
-                        sed -i '' '1s/^/'"$comp;$io;$rw;$compressionratio;"'/' "./TMP/$comp-$io-$rw.terse"
+                        sed -i '' '1s/^/'"$comp;$recordsize;$io;$rw;$compressionratio;"'/' "./TMP/$comp-$io-$rw.terse"
                     else
-                        sed -i '1s/^/'"$comp;$io;$rw;$compressionratio;"'/' "./TMP/$comp-$io-$rw.terse"
+                        sed -i '1s/^/'"$comp;$recordsize;$io;$rw;$compressionratio;"'/' "./TMP/$comp-$io-$rw.terse"
                     fi
 
-                    bandwidth=$(awk -F ';' '{print $11}' ./TMP/$comp-$io-$rw.terse)
+                    bandwidth=$(awk -F ';' '{print $12}' ./TMP/$comp-$io-$rw.terse)
                     echo "$(($bandwidth/1000)) MB/s" >> "./$TESTRESULTS"
                     echo "" >> "./$TESTRESULTS"
                     rm -f /$TESTDATASET/*
