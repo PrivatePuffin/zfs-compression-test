@@ -36,6 +36,7 @@ TESTPOOL_MANAGE="TRUE"
 TESTPOOL_VDEVS="RAMDISK"
 TESTPOOL_NAME="testpool"
 TESTDATASET="$TESTPOOL_NAME/fs1"
+TESTDATASET_RECORDSIZE=""
 
 #Export fio settings
 export SYNC_TYPE=0
@@ -79,7 +80,7 @@ sha256sum () {
     fi
 }
 
-while getopts "p:t:ribfhc:s:SP:F:" OPTION; do
+while getopts "p:t:ribfhc:s:SP:F:R:" OPTION; do
     case $OPTION in
         p)
             TESTRESULTS="$OPTARG-$TESTRESULTS.txt"
@@ -162,6 +163,9 @@ while getopts "p:t:ribfhc:s:SP:F:" OPTION; do
             FILE_SIZE=$OPTARG
             FILESIZE=$OPTARG
             ;;
+        R)
+            TESTDATASET_RECORDSIZE=$OPTARG
+            ;;
         h)
             echo "Usage: $0 [OPTION]... <-h|-b|-f|-c <\"COMPRESS[ COMPRESS[ ...]]\">>"
             echo ""
@@ -187,6 +191,7 @@ while getopts "p:t:ribfhc:s:SP:F:" OPTION; do
             echo "   -P <pool_name>    use existing ZFS Pool for the tests"
             echo "   -F <file_size>    size of files used in the 'fio' tests (if you benchmark on"
             echo "                     real block devices, this should be larger than your RAM)"
+            echo "   -R <recordsize>   always set zfs dataset recordsize to the specified value"
             exit 0
             ;;
         *)
@@ -288,10 +293,14 @@ if [  $MODE = "FULL" -o $MODE = "BASIC" -o $MODE = "CUSTOM" ]; then
     for io in $IO; do
         echo "Starting $io compression-performance tests"
         sudo $ZFS_CMD create $TESTDATASET
-        if [ $io = "random" ]; then
-            recordsize='8K'
+        if [ -z "$TESTDATASET_RECORDSIZE" ] ; then
+            if [ $io = "random" ]; then
+                recordsize='8K'
+            else
+                recordsize='1M'
+            fi
         else
-            recordsize='1M'
+            recordsize=$TESTDATASET_RECORDSIZE
         fi
         sudo $ZFS_CMD set recordsize=$recordsize  $TESTDATASET
         for comp in $ALGO; do
