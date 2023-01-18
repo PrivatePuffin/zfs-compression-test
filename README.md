@@ -39,6 +39,7 @@ By now you'll have all dependencies and you'll have a clean git clone in zfs-com
 - **-s** Enter custom storagepool-devices. (i.e. ./comp-test.sh -s "raidz1 /dev/disk1 /dev/disk2 /dev/disk3") 
 - **-P** Use existing ZFS Pool for the tests
 - **-F** Size of files used in the 'fio' tests (if you benchmark on real block devices, this should be larger than your RAM)
+- **-R** ZFS recordsize used by all tests (by default, random io tests use 8k, squential io tests use 1M recordsize)
 - **-h** Displays a help page, which includes a reference to the different commands
 
 When finished you'll have a .txt file in the zfs-compression-test directory, containing the test results

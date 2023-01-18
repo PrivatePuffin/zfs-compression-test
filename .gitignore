@@ -4,3 +4,4 @@ enwik9
 test_results_*
 TMP
 .*.swp
+.ipynb_checkpoints/
