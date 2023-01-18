@@ -192,6 +192,7 @@ while getopts "p:t:ribfhc:s:SP:F:R:" OPTION; do
             echo "   -F <file_size>    size of files used in the 'fio' tests (if you benchmark on"
             echo "                     real block devices, this should be larger than your RAM)"
             echo "   -R <recordsize>   always set zfs dataset recordsize to the specified value"
+            echo "                     (default: 8k in random io tests, 1M in squential io tests)"
             exit 0
             ;;
         *)
